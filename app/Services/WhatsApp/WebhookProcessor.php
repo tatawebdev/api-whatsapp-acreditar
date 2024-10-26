@@ -212,15 +212,15 @@ class WebhookProcessor
         $result['json'] = $event;
 
         WebhookData::create([
-            'event_type' => $result['event_type'],
-            'celular' => $result['celular'],
-            'conta_id' => $result['conta_id'],
-            'api_phone_id' => $result['api_phone_id'],
-            'api_phone_number' => $result['api_phone_number'],
-            'status' => $result['status'],
-            'status_id' => $result['status_id'],
-            'conversation' => $result['conversation'],
-            'json' => $result['json'],
+            'event_type' => $result['event_type'] ?? null,
+            'celular' => $result['celular'] ?? null,
+            'conta_id' => $result['conta_id'] ?? null,
+            'api_phone_id' => $result['api_phone_id'] ?? null,
+            'api_phone_number' => $result['api_phone_number'] ?? null,
+            'status' => $result['status'] ?? null,
+            'status_id' => $result['status_id'] ?? null,
+            'conversation' => $result['conversation'] ?? null,
+            'json' => $result['json'] ?? null,
         ]);
 
 
