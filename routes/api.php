@@ -15,9 +15,9 @@ Route::get('/webhook', [WebhookController::class, 'handle']);
 
 
 
-Route::get('conversations', [ChatController::class, 'getConversations']);
-Route::post('send-message', [ChatController::class, 'sendMessage']);
-Route::post('receive-message', [ChatController::class, 'receiveMessage']);
+// Route::get('conversations', [ChatController::class, 'getConversations']);
+// Route::post('send-message', [ChatController::class, 'sendMessage']);
+// Route::post('receive-message', [ChatController::class, 'receiveMessage']);
 
 
 
