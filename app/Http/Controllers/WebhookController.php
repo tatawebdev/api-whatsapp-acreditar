@@ -26,7 +26,7 @@ class WebhookController extends Controller
 
         if (method_exists($this, $methodName)) {
             var_dump($methodName);
-            return $this->$methodName($webhookInfo);
+            $this->$methodName($webhookInfo);
         }
 
         return response()->json($webhookInfo);
@@ -42,7 +42,6 @@ class WebhookController extends Controller
         $methodName = 'process_' . $webhookInfo['event_type'];
 
         if (method_exists($this, $methodName)) {
-            var_dump($methodName);
             return $this->$methodName($webhookInfo);
         }
     }
@@ -63,9 +62,6 @@ class WebhookController extends Controller
             'type' => $webhookInfo['event_type'],
             'sent_by_user' => 1,
         ]);
-
-
-        dd($webhookInfo, $message);
     }
 
     private function process_message_image($webhookInfo)
