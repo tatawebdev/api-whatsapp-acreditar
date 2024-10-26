@@ -40,8 +40,6 @@ class CurlHttpClient extends Config
 
     public function logError($error)
     {
-        // Aqui você pode implementar a lógica para logar no banco de dados
-        // Exemplo básico usando uma tabela de logs (Laravel)
 
         throw new \Exception($error);
     }

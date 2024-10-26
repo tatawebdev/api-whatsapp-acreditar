@@ -41,9 +41,6 @@ class WebhookController extends Controller
         // Construa o nome do método a ser chamado
         $methodName = 'process_' . $webhookInfo['event_type'];
 
-
-
-
         if (method_exists($this, $methodName)) {
             return $this->$methodName($webhookInfo);
         }
@@ -70,26 +67,29 @@ class WebhookController extends Controller
     {
         // Verifica se o ID do documento está presente
         if (!isset($webhookInfo['document']['id'])) {
-            return; // Ou lance uma exceção se preferir
+            // Você pode lançar uma exceção se preferir, mas não deve retornar nada
+            throw new \Exception('ID do documento não encontrado.');
         }
-
+    
         $directoryPath = 'docs-whatsapp';
-
+    
+        // Verifica se a pasta existe, caso contrário, cria
         if (!Storage::disk('public')->exists($directoryPath)) {
             Storage::disk('public')->makeDirectory($directoryPath);
         }
-
+    
         $id = $webhookInfo['document']['id'];
-
+    
         // Tenta baixar a mídia e verifica o resultado
         $media = new Media();
         if ($media->downloadMedia($id, "$directoryPath/$id")) {
-
+            // Cria ou recupera a conversa
             $conversation = Conversation::firstOrCreate(
                 ['from' => $webhookInfo['celular']],
                 ['contact_name' => $webhookInfo['name']]
             );
-
+    
+            // Cria a mensagem
             $message = $conversation->messages()->create([
                 'from' => $webhookInfo['celular'],
                 'message_id' => $webhookInfo['message_id'],
@@ -98,14 +98,12 @@ class WebhookController extends Controller
                 'type' => $webhookInfo['event_type'],
                 'sent_by_user' => 1,
             ]);
-
-            // Você pode adicionar algum log ou ação adicional aqui, se necessário
+    
         } else {
-            // Trate o caso em que o download falhou
-            // Você pode adicionar um log ou um aviso aqui
-            return;
+            throw new \Exception("Falha ao baixar o documento: ID $id");
         }
     }
+    
 
     private function process_message_image($webhookInfo)
     {
