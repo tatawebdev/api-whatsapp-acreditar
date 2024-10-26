@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained('conversations')->onDelete('cascade');
-            $table->text('content'); // Texto da mensagem
-            $table->boolean('sent_by_user'); // Enviado pelo usuário ou contato
+            $table->text('content'); 
+            $table->boolean('sent_by_user'); 
             $table->timestamps();
         });
     }

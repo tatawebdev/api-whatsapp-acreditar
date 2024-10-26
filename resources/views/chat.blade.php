@@ -44,7 +44,7 @@
             whatsapp_id: '12345', // ID da conversa do WhatsApp, ajustável conforme necessário
             contact_name: 'Contato', // Nome do contato
             content: message,
-            sent_by_user: true
+            sent_by_user: 1
         }, function(response) {
             $('#message-input').val('');
             loadMessages();
@@ -55,7 +55,7 @@
         loadMessages();
 
         // Recarregar mensagens a cada 5 segundos
-        setInterval(loadMessages, 5000);
+        // setInterval(loadMessages, 5000);
     });
 </script>
 
