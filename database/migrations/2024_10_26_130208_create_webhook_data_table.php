@@ -11,7 +11,7 @@ class CreateWebhookDataTable extends Migration
             $table->id();
             $table->string('event_type');
             $table->string('celular');
-            $table->string('conversation_id');
+            $table->string('conta_id');
             $table->string('api_phone_id');
             $table->string('api_phone_number');
             $table->string('status');

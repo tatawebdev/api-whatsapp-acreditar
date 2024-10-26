@@ -150,7 +150,7 @@ class WebhookProcessor
 
         // Verifica e atribui o ID, se presente
         if (isset($entry['id'])) {
-            $result['conversation_id'] = $entry['id'];
+            $result['conta_id'] = $entry['id'];
         }
         if (isset($contacts['profile']['name'])) {
             $result['name'] = $contacts['profile']['name'];
@@ -214,7 +214,7 @@ class WebhookProcessor
         WebhookData::create([
             'event_type' => $result['event_type'],
             'celular' => $result['celular'],
-            'conversation_id' => $result['conversation_id'],
+            'conta_id' => $result['conta_id'],
             'api_phone_id' => $result['api_phone_id'],
             'api_phone_number' => $result['api_phone_number'],
             'status' => $result['status'],
