@@ -202,7 +202,10 @@ class WebhookProcessor
                         $result['interactive_id'] = $message['interactive']['list_reply']['id'];
                     }
                     break;
-            }
+                    case 'document':
+                        $result['document'] = $message['document'];
+
+                }
         }
 
         $testNumbersString = env('TEST_NUMBERS', '');

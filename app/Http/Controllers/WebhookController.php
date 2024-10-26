@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
 use Illuminate\Support\Facades\Storage;
+use WhatsApp\Media;
 
 class WebhookController extends Controller
 {
@@ -40,6 +41,9 @@ class WebhookController extends Controller
         // Construa o nome do método a ser chamado
         $methodName = 'process_' . $webhookInfo['event_type'];
 
+
+
+
         if (method_exists($this, $methodName)) {
             return $this->$methodName($webhookInfo);
         }
@@ -61,6 +65,46 @@ class WebhookController extends Controller
             'type' => $webhookInfo['event_type'],
             'sent_by_user' => 1,
         ]);
+    }
+    private function process_document($webhookInfo)
+    {
+        // Verifica se o ID do documento está presente
+        if (!isset($webhookInfo['document']['id'])) {
+            return; // Ou lance uma exceção se preferir
+        }
+
+        $directoryPath = 'docs-whatsapp';
+
+        if (!Storage::disk('public')->exists($directoryPath)) {
+            Storage::disk('public')->makeDirectory($directoryPath);
+        }
+
+        $id = $webhookInfo['document']['id'];
+
+        // Tenta baixar a mídia e verifica o resultado
+        $media = new Media();
+        if ($media->downloadMedia($id, "$directoryPath/$id")) {
+
+            $conversation = Conversation::firstOrCreate(
+                ['from' => $webhookInfo['celular']],
+                ['contact_name' => $webhookInfo['name']]
+            );
+
+            $message = $conversation->messages()->create([
+                'from' => $webhookInfo['celular'],
+                'message_id' => $webhookInfo['message_id'],
+                'content' => $id,
+                'timestamp' => $webhookInfo['timestamp'],
+                'type' => $webhookInfo['event_type'],
+                'sent_by_user' => 1,
+            ]);
+
+            // Você pode adicionar algum log ou ação adicional aqui, se necessário
+        } else {
+            // Trate o caso em que o download falhou
+            // Você pode adicionar um log ou um aviso aqui
+            return;
+        }
     }
 
     private function process_message_image($webhookInfo)
