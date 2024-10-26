@@ -41,7 +41,7 @@ class WebhookController extends Controller
         // Construa o nome do método a ser chamado
         $methodName = 'process_' . $webhookInfo['event_type'];
 
-
+dd($methodName);
 
 
         if (method_exists($this, $methodName)) {
