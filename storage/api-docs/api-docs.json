@@ -1,0 +1,71 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Documentação da API",
+        "description": "Documentação da API usando Swagger",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/webhook": {
+            "post": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Receber e processar dados do webhook",
+                "description": "Este endpoint recebe dados do webhook e os salva em um arquivo JSON.",
+                "operationId": "74431d219ed9fdac506e704d6554658b",
+                "parameters": [
+                    {
+                        "name": "hub_challenge",
+                        "in": "query",
+                        "description": "Código de verificação do webhook",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Dados do Webhook",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            },
+                            "example": {
+                                "event": "new_message",
+                                "data": {
+                                    "id": "12345",
+                                    "content": "Exemplo de conteúdo"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Retorna o hub_challenge se presente, ou mensagem de sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "status": "success",
+                                    "message": "Webhook data saved successfully!"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Webhook",
+            "description": "Webhook"
+        }
+    ]
+}
