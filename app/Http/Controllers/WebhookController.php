@@ -15,27 +15,36 @@ class WebhookController extends Controller
         }
 
         $data = $request->getContent();
-        $result = WebhookProcessor::tratarWebhookWhatsApp($data);
+        $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
         $this->saveWebhookData($request->all());
 
-        return response()->json($result);
+        return response()->json($webhookInfo);
     }
 
     public function processWebhookMockado(Request $request)
     {
-        if ($this->isChallengeRequest($request)) {
-            return $this->handleChallenge($request);
-        }
-
         WebhookProcessor::debugOn();
-
         $data = $request->getContent();
-        $result = WebhookProcessor::tratarWebhookWhatsApp($data);
+        $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
-        // Para depuração, exibindo o resultado
-        dd($result);
-        // return response()->json($result);
+        // Construa o nome do método a ser chamado
+        $methodName = 'process_' . $webhookInfo['event_type'];
+
+        if (method_exists($this, $methodName)) {
+            var_dump($methodName);
+            return $this->$methodName($webhookInfo);
+        }
+    }
+
+    private function process_message_text($webhookInfo)
+    {
+        dd($webhookInfo);
+    }
+
+    private function process_message_image($webhookInfo)
+    {
+        // Lógica para processar imagens
     }
 
     // Verifica se é uma solicitação de desafio do webhook

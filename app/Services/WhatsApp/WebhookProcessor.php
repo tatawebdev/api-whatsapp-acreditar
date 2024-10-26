@@ -85,23 +85,23 @@ class WebhookProcessor
                             "display_phone_number": "15551918890",
                             "phone_number_id": "414634731742393"
                         },
-                        "statuses": [
+                        "contacts": [
                             {
-                                "id": "wamid.HBgNNTUxMTk2NDg3MDc0NBUCABEYEkZBREZEMjJEOTE0NDkxNUQxQwA=",
-                                "status": "delivered",
-                                "timestamp": "1729819380",
-                                "recipient_id": "5511964870744",
-                                "conversation": {
-                                    "id": "786d0a4f83f2b97ac19af61f20f342d3",
-                                    "origin": {
-                                        "type": "utility"
-                                    }
+                                "profile": {
+                                    "name": "Tata Web"
                                 },
-                                "pricing": {
-                                    "billable": true,
-                                    "pricing_model": "CBP",
-                                    "category": "utility"
-                                }
+                                "wa_id": "5511964870744"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "5511964870744",
+                                "id": "wamid.HBgNNTUxMTk2NDg3MDc0NBUCABIYFjNFQjA3RkM1QzVFRTI2OTVDNkJGQ0QA",
+                                "timestamp": "1729953067",
+                                "text": {
+                                    "body": "ola"
+                                },
+                                "type": "text"
                             }
                         ]
                     },
