@@ -57,6 +57,48 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Erro ao processar os dados do webhook",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "status": "error",
+                                    "message": "Invalid data"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/index": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get list of users",
+                "operationId": "getUsers",
+                "responses": {
+                    "200": {
+                        "description": "A list of users"
+                    },
+                    "404": {
+                        "description": "No users found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "status": "error",
+                                    "message": "No users found"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -66,6 +108,10 @@
         {
             "name": "Webhook",
             "description": "Webhook"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
         }
     ]
 }
