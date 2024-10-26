@@ -12,7 +12,7 @@ class WebhookData extends Model
     protected $fillable = [
         'event_type',
         'celular',
-        'conversation_id',
+        'conta_id',
         'api_phone_id',
         'api_phone_number',
         'status',
