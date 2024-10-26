@@ -25,7 +25,6 @@ class WebhookController extends Controller
         $methodName = 'process_' . $webhookInfo['event_type'];
 
         if (method_exists($this, $methodName)) {
-            var_dump($methodName);
             $this->$methodName($webhookInfo);
         }
 
