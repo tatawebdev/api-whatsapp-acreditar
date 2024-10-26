@@ -18,7 +18,16 @@ class WebhookController extends Controller
         $data = $request->getContent();
         $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
+
         $this->saveWebhookData($request->all());
+
+
+        $methodName = 'process_' . $webhookInfo['event_type'];
+
+        if (method_exists($this, $methodName)) {
+            var_dump($methodName);
+            return $this->$methodName($webhookInfo);
+        }
 
         return response()->json($webhookInfo);
     }
