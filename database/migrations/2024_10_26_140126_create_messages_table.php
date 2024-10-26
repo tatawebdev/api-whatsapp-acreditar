@@ -16,8 +16,13 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained('conversations')->onDelete('cascade');
-            $table->text('content'); 
-            $table->boolean('sent_by_user'); 
+            $table->text('content');
+            $table->boolean('sent_by_user');
+
+            $table->string('from'); 
+            $table->string('message_id'); 
+            $table->unsignedBigInteger('timestamp'); 
+            $table->string('type'); 
             $table->timestamps();
         });
     }
