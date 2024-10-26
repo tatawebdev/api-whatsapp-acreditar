@@ -16,7 +16,7 @@ class ChatController extends Controller
     public function sendMessage(Request $request)
     {
         $conversation = Conversation::firstOrCreate(
-            ['whatsapp_id' => $request->whatsapp_id],
+            ['from' => $request->from],
             ['contact_name' => $request->contact_name]
         );
 
@@ -30,7 +30,7 @@ class ChatController extends Controller
 
     public function receiveMessage(Request $request)
     {
-        $conversation = Conversation::where('whatsapp_id', $request->whatsapp_id)->first();
+        $conversation = Conversation::where('from', $request->from)->first();
 
         if ($conversation) {
             $message = $conversation->messages()->create([

@@ -21,6 +21,9 @@ class WebhookData extends Model
         'json',
     ];
 
+
+
+    
     protected $casts = [
         'conversation' => 'array',
         'json' => 'array',

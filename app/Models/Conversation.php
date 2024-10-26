@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
-    protected $fillable = ['whatsapp_id', 'contact_name'];
+    protected $fillable = ['from', 'contact_name'];
 
     public function messages()
     {

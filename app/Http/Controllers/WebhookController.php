@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
 use Illuminate\Support\Facades\Storage;
@@ -39,7 +40,23 @@ class WebhookController extends Controller
 
     private function process_message_text($webhookInfo)
     {
-        dd($webhookInfo);
+
+        $conversation = Conversation::firstOrCreate(
+            ['from' => $webhookInfo['celular']],
+            ['contact_name' => $webhookInfo['name']]
+        );
+
+        $message = $conversation->messages()->create([
+            'from' => $webhookInfo['celular'],
+            'message_id' => $webhookInfo['message_id'],
+            'content' => $webhookInfo['message'],
+            'timestamp' => $webhookInfo['timestamp'],
+            'type' => $webhookInfo['event_type'],
+            'sent_by_user' => 1,
+        ]);
+
+
+        dd($webhookInfo, $message);
     }
 
     private function process_message_image($webhookInfo)

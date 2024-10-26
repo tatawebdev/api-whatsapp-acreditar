@@ -41,10 +41,11 @@
         if (message.trim() === '') return;
 
         $.post('/api/send-message', {
-            whatsapp_id: '12345', // ID da conversa do WhatsApp, ajustável conforme necessário
+            from: '12345', // ID da conversa do WhatsApp, ajustável conforme necessário
             contact_name: 'Contato', // Nome do contato
             content: message,
             sent_by_user: 1
+            
         }, function(response) {
             $('#message-input').val('');
             loadMessages();

@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
-            $table->string('whatsapp_id')->unique(); // ID da conversa no WhatsApp
+            $table->string('from')->unique(); // ID da conversa no WhatsApp
             $table->string('contact_name'); // Nome do contato ou número de telefone
             $table->timestamps();
         });

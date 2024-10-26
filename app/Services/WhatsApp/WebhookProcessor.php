@@ -173,6 +173,7 @@ class WebhookProcessor
             $message = $changesValue['messages'][0];
             $result['celular'] = $message['from'];
             $result['event_type'] = $message['type'];
+            $result['timestamp'] = $message['timestamp'];
             $result['message_id'] = $message['id'] ?? null;
 
             // Ação com base no tipo de mensagem
