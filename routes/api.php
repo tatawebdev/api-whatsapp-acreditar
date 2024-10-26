@@ -10,8 +10,7 @@ Route::get('/webhook/mockado', [WebhookController::class, 'processWebhookMockado
 
 
 Route::post('/webhook', [WebhookController::class, 'processWebhook']);
-
-// Route::match(['get', 'post'], '/webhook', [WebhookController::class, 'handle']);
+Route::get('/webhook', [WebhookController::class, 'handle']);
 
 
 
