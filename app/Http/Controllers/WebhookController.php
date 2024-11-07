@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
+use Hamcrest\Arrays\IsArray;
 use Illuminate\Support\Facades\Storage;
 use WhatsApp\Media;
 
@@ -38,6 +39,11 @@ class WebhookController extends Controller
         $data = $request->getContent();
         $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
+
+        // if ($webhookInfo['event_type'] == 'unsupported')
+        //     return;
+
+
         // Construa o nome do método a ser chamado
         $methodName = 'process_' . $webhookInfo['event_type'];
 
@@ -46,69 +52,94 @@ class WebhookController extends Controller
         }
     }
 
-    private function process_message_text($webhookInfo)
-    {
 
+    private function createMessage($webhookInfo,  $content)
+    {
         $conversation = Conversation::firstOrCreate(
             ['from' => $webhookInfo['celular']],
             ['contact_name' => $webhookInfo['name']]
         );
 
-        $message = $conversation->messages()->create([
+
+
+        $conversation->messages()->create([
             'from' => $webhookInfo['celular'],
             'message_id' => $webhookInfo['message_id'],
-            'content' => $webhookInfo['message'],
+            'content' => is_array($content) ? json_encode($content) : $content,
             'timestamp' => $webhookInfo['timestamp'],
             'type' => $webhookInfo['event_type'],
             'sent_by_user' => 1,
         ]);
     }
+
+    private function process_message_text($webhookInfo)
+    {
+        $this->createMessage($webhookInfo, $webhookInfo['message']);
+    }
+
+    private function process_contacts($webhookInfo)
+    {
+        $this->createMessage($webhookInfo, $webhookInfo['contacts']);
+    }
+
+
+    private function process_image($webhookInfo)
+    {
+        $this->process_file($webhookInfo);
+    }
+    private function process_sticker($webhookInfo)
+    {
+        $this->process_file($webhookInfo);
+    }
     private function process_document($webhookInfo)
     {
-        // Verifica se o ID do documento está presente
-        if (!isset($webhookInfo['document']['id'])) {
-            // Você pode lançar uma exceção se preferir, mas não deve retornar nada
-            throw new \Exception('ID do documento não encontrado.');
+        $this->process_file($webhookInfo);
+    }
+
+    private function process_audio($webhookInfo)
+    {
+        $this->process_file($webhookInfo);
+    }
+
+    private function process_video($webhookInfo)
+    {
+        $this->process_file($webhookInfo);
+    }
+
+    private function process_file($webhookInfo)
+    {
+
+        $fileType = $webhookInfo['event_type'];
+        // Verifica se o ID do arquivo está presente
+        if (!isset($webhookInfo[$fileType]['id'])) {
+            throw new \Exception('ID do ' . $fileType . ' não encontrado.' . json_encode($webhookInfo));
         }
-    
+
+        $id = $webhookInfo[$fileType]['id'];
+        $this->document($webhookInfo, $id);
+    }
+
+    private function document($webhookInfo, $id)
+    {
+
         $directoryPath = 'docs-whatsapp';
-    
+
         // Verifica se a pasta existe, caso contrário, cria
         if (!Storage::disk('public')->exists($directoryPath)) {
             Storage::disk('public')->makeDirectory($directoryPath);
         }
-    
-        $id = $webhookInfo['document']['id'];
-    
+
+
         // Tenta baixar a mídia e verifica o resultado
         $media = new Media();
         if ($media->downloadMedia($id, "$directoryPath/$id")) {
             // Cria ou recupera a conversa
-            $conversation = Conversation::firstOrCreate(
-                ['from' => $webhookInfo['celular']],
-                ['contact_name' => $webhookInfo['name']]
-            );
-    
-            // Cria a mensagem
-            $message = $conversation->messages()->create([
-                'from' => $webhookInfo['celular'],
-                'message_id' => $webhookInfo['message_id'],
-                'content' => $id,
-                'timestamp' => $webhookInfo['timestamp'],
-                'type' => $webhookInfo['event_type'],
-                'sent_by_user' => 1,
-            ]);
-    
+            $this->createMessage($webhookInfo, $id);
         } else {
             throw new \Exception("Falha ao baixar o documento: ID $id");
         }
     }
-    
 
-    private function process_message_image($webhookInfo)
-    {
-        // Lógica para processar imagens
-    }
 
     // Verifica se é uma solicitação de desafio do webhook
     private function isChallengeRequest(Request $request): bool

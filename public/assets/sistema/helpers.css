@@ -1,0 +1,134 @@
+    .align-self-end {
+        align-self: end;
+    }
+
+    .align-self-end.flex-grow {
+        align-self: end;
+        flex-grow: 0;
+    }
+
+    .btn-green {
+        background-color: #6cda46 !important;
+    }
+
+    #dropdownFilter a {
+        user-select: none;
+    }
+
+    #dropdownFilter .active {
+        background-color: #dfe1e8;
+
+    }
+
+    .float {
+        position: fixed;
+        width: 60px;
+        height: 60px;
+        bottom: 40px;
+        right: 40px;
+        background-color: #0C9;
+        color: #FFF;
+        border-radius: 50px;
+        text-align: center;
+        box-shadow: 2px 2px 3px #999;
+        z-index: 999;
+    }
+
+
+    .my-float {
+        margin-top: 20px;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .modal-dialog.max-width-100 {
+        max-width: 100% !important;
+    }
+
+    .overflow-hidden {
+        overflow: hidden !important;
+    }
+
+    .flex-1 {
+        -webkit-box-flex: 1;
+        -ms-flex: 1;
+        flex: 1;
+    }
+
+
+    *,
+    ::after,
+    ::before {
+        box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+    }
+
+    tr {
+        display: table-row;
+        vertical-align: inherit;
+    }
+
+    div.card-body tbody {
+        color: black;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #e2e8f2;
+    }
+
+    .table-nowrap td,
+    .table-nowrap th {
+        white-space: nowrap;
+    }
+
+    .table>:not(caption)>*>* {
+        padding: 0.75rem 0.75rem;
+        background-color: var(--bs-table-bg);
+        border-bottom-width: 1px;
+        -webkit-box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+        box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+    }
+
+    tbody,
+    td,
+    tfoot,
+    th,
+    thead,
+    tr {
+        border-style: solid;
+        border-width: 0;
+    }
+
+    .card {
+        position: relative;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        min-width: 0;
+        word-wrap: break-word;
+        background-color: #fff;
+        background-clip: border-box;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0.25rem;
+    }
+
+    thead {
+        background-color: #efefef;
+    }
+
+    .break_word {
+        display: flex;
+        text-overflow: ellipsis;
+        word-wrap: break-word;
+        overflow: hidden;
+        /* max-height: 3.6em; */
+        /* line-height: 1.8em; */
+        width: 100px;
+    }
+    .width-0 {
+        width: 0px;
+    }
