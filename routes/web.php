@@ -26,6 +26,7 @@ Route::post('/chat/conversations', [ChatController::class, 'getConversations'])-
 Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
 
 
+
 // Route::get('/', function () {
 //     return view('welcome');
 // });
