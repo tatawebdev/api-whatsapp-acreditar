@@ -8,10 +8,25 @@ use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
+    // public function getConversations()
+    // {
+    //     return Conversation::with('messages')->get();
+    // }
     public function getConversations()
     {
-        return Conversation::with('messages')->get();
+        return Conversation::get();
     }
+    public function getMessages($id = null)
+    {
+        if (!$id)
+            return response()->json(['error' => 'ID da conversa é necessário.'], 400);
+    
+        $messages = Message::where('conversation_id', $id)->paginate(20);
+    
+        return response()->json($messages);
+    }
+    
+    
 
     public function sendMessage(Request $request)
     {
