@@ -60,6 +60,9 @@ class WebhookController extends Controller
             ['contact_name' => $webhookInfo['name']]
         );
 
+        $conversation->updated_at = now();
+
+        $conversation->save();
 
 
         $conversation->messages()->create([

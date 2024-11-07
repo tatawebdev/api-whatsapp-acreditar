@@ -23,7 +23,7 @@ function ajaxSimpleRequest(
 		},
 		error: function (error) {
 			console.log(error);
-			let message = !(error.responseJSON?.error) ? "Ocorreu um erro ao comunicar com o servidor" : error.responseJSON?.error;
+			let message = error.responseJSON?.error || error.responseJSON?.message || "Ocorreu um erro ao comunicar com o servidor";
 
 			alertify.error(message);
 		},

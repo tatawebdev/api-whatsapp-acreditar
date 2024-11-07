@@ -20,8 +20,9 @@ Route::get('/', function () {
 
 
 Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
-Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
+Route::get('/teste', [ChatController::class, 'teste']);
 
+Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
 Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
 Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
 

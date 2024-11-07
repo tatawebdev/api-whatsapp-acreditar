@@ -147,7 +147,8 @@
                             <button type="button" class="btn btn-link d-none d-sm-inline-block">
                                 <i class="fa fa-file-alt"></i>
                             </button>
-                            <button type="button" class="btn btn-link d-none d-sm-inline-block" id="uploadImageButton">
+                            <button type="button" class="btn btn-link d-none d-sm-inline-block"
+                                id="uploadImageButton">
                                 <i class="fa fa-image"></i>
                             </button>
                             <button type="button" class="btn btn-link d-none d-sm-inline-block">
@@ -157,11 +158,11 @@
                                 <i class="fa fa-smile"></i>
                             </button>
                             <!-- Campo de entrada de mensagem de texto -->
-                            <input type="text"
+                            <input id='chat-mensagem'  type="text"
                                 class="js-chat-input form-control form-control-alt border-0 bg-transparent"
                                 data-target-chat-id="1" placeholder="Type a message..">
                             <!-- Botão de envio de mensagem -->
-                            <button type="submit" class="btn btn-link">
+                            <button type="submit" onclick="enviarMensagemWhatsApp()" class="btn btn-link">
                                 <i class="fab fa-telegram-plane opacity-50"></i>
                                 <span class="d-none d-sm-inline ms-1 fw-semibold">Send</span>
                             </button>
@@ -171,7 +172,7 @@
                         </div>
                     </form>
 
-                
+
 
                 </div>
 

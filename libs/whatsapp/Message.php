@@ -205,9 +205,10 @@ class Message extends CurlHttpClient
         $decodedResult = json_decode($result, true);
 
         if (isset($decodedResult['error']['error_data']['details'])) {
-            throw new \Exception(json_encode($this->array));
             throw new \Exception($decodedResult['error']['error_data']['details']);
+        } elseif (isset($decodedResult['error']['message'])) {
+            throw new \Exception($decodedResult['error']['message']);
         }
-        return $result;
+        return $decodedResult;
     }
 }
