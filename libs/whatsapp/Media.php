@@ -54,7 +54,7 @@ class Media extends CurlHttpClient
 
     public function getMediaInfo($mediaId)
     {
-        $url = "https://graph.facebook.com/v18.0/{$mediaId}/";
+        $url = "https://graph.facebook.com/v20.0/{$mediaId}/";
         $headers = ["Authorization: Bearer " . config('whatsapp.token')];
 
         $result = $this->sendRequest($url, 'GET', $headers);

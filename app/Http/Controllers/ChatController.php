@@ -1,27 +1,46 @@
 <?php
-// app/Http/Controllers/ChatController.php
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Http\Request;
-use App\Models\Message; // Um modelo Message, se estiver armazenando no banco de dados
 
 class ChatController extends Controller
 {
-    public function index()
+    public function getConversations()
     {
-        // Exibe a view do chat
-        return view('chat');
+        return Conversation::with('messages')->get();
     }
 
     public function sendMessage(Request $request)
     {
-        // Salva a mensagem no banco de dados
-        $message = new Message();
-        $message->content = $request->input('message');
-        $message->user_id = auth()->id(); // ID do usuário autenticado
-        $message->save();
+        $conversation = Conversation::firstOrCreate(
+            ['from' => $request->from],
+            ['contact_name' => $request->contact_name]
+        );
 
-        return response()->json(['message' => $message]);
+        $message = $conversation->messages()->create([
+            'content' => $request->content,
+            'sent_by_user' => $request->sent_by_user,
+        ]);
+
+        return response()->json($message, 201);
+    }
+
+    public function receiveMessage(Request $request)
+    {
+        $conversation = Conversation::where('from', $request->from)->first();
+
+        if ($conversation) {
+            $message = $conversation->messages()->create([
+                'content' => $request->content,
+                'sent_by_user' => false,
+            ]);
+
+            return response()->json($message, 201);
+        }
+
+        return response()->json(['error' => 'Conversation not found'], 404);
     }
 }
