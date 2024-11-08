@@ -86,7 +86,6 @@ class WebhookController extends Controller
 
             // Preparar dados para a notificação
             $notificationData = [
-
                 'name' => "{$webhookInfo['name']}",
                 'phone' => "{$webhookInfo['celular']}",
                 'message_id' => "{$webhookInfo['message_id']}",
