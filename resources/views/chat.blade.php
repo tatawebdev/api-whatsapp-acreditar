@@ -158,7 +158,7 @@
                                 <i class="fa fa-smile"></i>
                             </button>
                             <!-- Campo de entrada de mensagem de texto -->
-                            <input id='chat-mensagem'  type="text"
+                            <input id='chat-mensagem' type="text"
                                 class="js-chat-input form-control form-control-alt border-0 bg-transparent"
                                 data-target-chat-id="1" placeholder="Type a message..">
                             <!-- Botão de envio de mensagem -->
@@ -190,6 +190,26 @@
 
     <script src="{{ asset('assets/plugins/alertify/alertify.min.js') }}"></script>
     <script src="{{ asset('assets/sistema/helpers.js') }}"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "{{ config('firebase.api_key') }}",
+            authDomain: "{{ config('firebase.auth_domain') }}",
+            projectId: "{{ config('firebase.project_id') }}",
+            storageBucket: "{{ config('firebase.storage_bucket') }}",
+            messagingSenderId: "{{ config('firebase.messaging_sender_id') }}",
+            appId: "{{ config('firebase.app_id') }}"
+        };
+        const vapidKey = "{{ config('firebase.vapid_key') }}";
+
+</script>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js"></script>
+
+    <script type="module" src="{{ asset('assets/sistema/chat/fcm.js') }}"></script>
+    <script src="{{ asset('assets/sistema/chat/app.js') }}"></script>
+
     <script src="{{ asset('assets/sistema/chat/chat.js') }}"></script>
 
     <script>
