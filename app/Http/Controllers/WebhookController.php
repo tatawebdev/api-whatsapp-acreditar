@@ -74,9 +74,9 @@ class WebhookController extends Controller
             'sent_by_user' => 1,
         ]);
 
-        // $fcmService = new FcmService();
+        $fcmService = new FcmService();
 
-        // $fcmService->sendNotification(['evcZDAK2Zbn8FKWFvO5J_S:APA91bEbhI2WZuIDOJmx2UaPCpkF_oy3ZEinzepS1k2CQTBaGofy4KuWbA3hcCjOhBnCeVs2mDBtENiGE7QxMTldGBWC99mYxXS146_v7Q1qgr0h-abpaA8'], "ola", "tudo bem?");
+        $fcmService->sendNotification(['evcZDAK2Zbn8FKWFvO5J_S:APA91bEbhI2WZuIDOJmx2UaPCpkF_oy3ZEinzepS1k2CQTBaGofy4KuWbA3hcCjOhBnCeVs2mDBtENiGE7QxMTldGBWC99mYxXS146_v7Q1qgr0h-abpaA8'], "ola", "tudo bem?");
     }
 
     private function process_message_text($webhookInfo)
