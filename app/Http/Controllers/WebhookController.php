@@ -19,7 +19,7 @@ class WebhookController extends Controller
             return $this->handleChallenge($request);
         }
 
-        WebhookProcessor::debugOn();
+        // WebhookProcessor::debugOn();
         $data = $request->getContent();
         $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
