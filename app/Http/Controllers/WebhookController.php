@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\FcmToken;
 use App\Services\FcmService;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
@@ -54,31 +55,51 @@ class WebhookController extends Controller
     }
 
 
-    private function createMessage($webhookInfo,  $content)
+    private function createMessage($webhookInfo, $content)
     {
+        // Criar ou atualizar a conversa
         $conversation = Conversation::firstOrCreate(
             ['from' => $webhookInfo['celular']],
             ['contact_name' => $webhookInfo['name']]
         );
 
         $conversation->updated_at = now();
-
         $conversation->save();
 
-        $conversation->messages()->create([
+        // Criar a mensagem
+        $data = $conversation->messages()->create([
             'from' => $webhookInfo['celular'],
             'message_id' => $webhookInfo['message_id'],
             'content' => is_array($content) ? json_encode($content) : $content,
             'timestamp' => $webhookInfo['timestamp'],
             'type' => $webhookInfo['event_type'],
-            'sent_by_user' => 1,
+            'sent_by_user' => "1",
         ]);
 
-        $fcmService = new FcmService();
+        // Obter tokens FCM
+        $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
 
-        $fcmService->sendNotification(['evcZDAK2Zbn8FKWFvO5J_S:APA91bEbhI2WZuIDOJmx2UaPCpkF_oy3ZEinzepS1k2CQTBaGofy4KuWbA3hcCjOhBnCeVs2mDBtENiGE7QxMTldGBWC99mYxXS146_v7Q1qgr0h-abpaA8'], "ola", "tudo bem?");
+        // Verificar se há tokens FCM
+        if (count($fcmTokens) > 0) {
+            // Instanciar o serviço FCM
+            $fcmService = new FcmService();
+
+            // Preparar dados para a notificação
+            $notificationData = [
+
+                'name' => "{$webhookInfo['name']}",
+                'phone' => "{$webhookInfo['celular']}",
+                'message_id' => "{$webhookInfo['message_id']}",
+                'content' => is_array($content) ? json_encode($content) : $content,
+                'timestamp' => "{$webhookInfo['timestamp']}",
+                'type' => $webhookInfo['event_type'],
+                'sent_by_user' => "1",
+            ];
+
+            // Enviar a notificação
+            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], $content,  $notificationData);
+        }
     }
-
     private function process_message_text($webhookInfo)
     {
         $this->createMessage($webhookInfo, $webhookInfo['message']);

@@ -16,10 +16,13 @@ class FcmService
 
     public function __construct()
     {
-        // Carrega as configurações do Firebase a partir do config
-        $this->clientEmail = config('firebase.client_email');
-        $this->privateKey = config('firebase.private_key');
-        $this->projectId = config('firebase.project_id');
+
+        $firebaseCredentials = json_decode(file_get_contents(storage_path('app/firebase_credentials.json')), true);
+
+        // Extrair as informações necessárias
+        $this->clientEmail = $firebaseCredentials['client_email'];
+        $this->privateKey = $firebaseCredentials['private_key'];
+        $this->projectId = $firebaseCredentials['project_id'];
 
         $this->accessToken = $this->getAccessToken();
     }
@@ -34,11 +37,27 @@ class FcmService
      * 
      * @return void
      */
+
+    function array_values_to_string($array)
+    {
+        // Percorre cada item do array
+        foreach ($array as $key => $value) {
+            // Se o valor for um array, chama a função recursivamente
+            if (is_array($value)) {
+                $array[$key] = $this->array_values_to_string($value);
+            } else {
+                // Caso contrário, converte o valor para string
+                $array[$key] = (string) $value;
+            }
+        }
+        return $array;
+    }
     public function sendNotification(array $deviceTokens, string $title, string $body, array $data = [])
     {
         if (count($deviceTokens) == 0) {
             return;
         }
+        // $data = $this->array_values_to_string($data);
 
         $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
 
