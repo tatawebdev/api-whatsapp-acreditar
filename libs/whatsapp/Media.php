@@ -23,10 +23,14 @@ class Media extends CurlHttpClient
         return $decodedResult['id'] ?? $this->logError("Erro ao enviar mídia: $result");
     }
 
-    public function downloadMedia($mediaId, $savePath)
+    public function downloadMedia($mediaInfo, $savePath)
     {
-        $mediaInfo = $this->getMediaInfo($mediaId);
-        if (!$mediaInfo || empty($mediaInfo['url'])) return $this->logError("URL da mídia não encontrada.");
+        // $mediaInfo = $this->getMediaInfo($mediaId);
+        // if (!$mediaInfo || empty($mediaInfo['url'])) return $this->logError("URL da mídia não encontrada.");
+
+        if (empty($mediaInfo['url'])) {
+            return $this->logError("URL da mídia não encontrada.");
+        }
 
         $ch = curl_init($mediaInfo['url']);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -37,18 +41,25 @@ class Media extends CurlHttpClient
         curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 
-        // Executa a chamada
+        // Executa a chamada cURL
         $data = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
+        // Se o código de resposta HTTP for 200 (OK)
         if ($httpCode === 200) {
+            // Determina a extensão do arquivo
             $extension = explode('/', curl_getinfo($ch, CURLINFO_CONTENT_TYPE))[1];
             $filePath = "{$savePath}.{$extension}";
+
+            // Salva o arquivo no diretório público
             Storage::disk('public')->put($filePath, $data);
-            return Storage::path($filePath);
+
+            // Retorna a URL pública do arquivo
+            return Storage::url($filePath);  // Retorna a URL completa acessível via web
         }
 
+        // Retorna um erro se o download falhar
         return $this->logError("Erro ao baixar mídia: Código HTTP $httpCode");
     }
 

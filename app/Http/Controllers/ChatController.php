@@ -35,7 +35,7 @@ class ChatController extends Controller
         if (!$id)
             return response()->json(['error' => 'ID da conversa é necessário.'], 400);
 
-        $messages = Message::where('conversation_id', $id)->paginate(20);
+        $messages = Message::where('conversation_id', $id)->paginate(20000);
 
         return response()->json($messages);
     }
@@ -66,7 +66,6 @@ class ChatController extends Controller
 
 
         $returnMeta = $this->sendMessageWhatsApp($validated['from'], $validated['content']);
-
         // Verifica se o envio pelo WhatsApp foi bem-sucedido
         if (empty($returnMeta['messages'][0]['id'])) {
             return response()->json([
@@ -90,7 +89,7 @@ class ChatController extends Controller
         $message = $conversation->messages()->create([
             'content' => $validated['content'],
             'from' => $validated['from'],
-            'message_id' => "",
+            'message_id' => $returnMeta['messages'][0]['id'],
             'timestamp' => strtotime(now()), // Preenchido com a data e hora atual
             'type' => "",
             'sent_by_user' => (int) ($validated['sent_by_user'] ?? false),

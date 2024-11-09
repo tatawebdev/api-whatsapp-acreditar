@@ -4,6 +4,7 @@
 
 namespace App\Services;
 
+use App\Services\WhatsApp\WebhookProcessor;
 use Exception;
 use Illuminate\Support\Facades\Http;
 
@@ -52,25 +53,34 @@ class FcmService
         }
         return $array;
     }
-    public function sendNotification(array $deviceTokens, string $title, string $body, array $data = [])
+    public function sendNotification(array $deviceTokens, string $title, string $body, array $data = [], $onlyData = false)
     {
         if (count($deviceTokens) == 0) {
             return;
         }
-        // $data = $this->array_values_to_string($data);
 
         $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+        $sentTokens = [];
+
 
         foreach ($deviceTokens as $deviceToken) {
-            $fields = [
-                'message' => [
-                    'notification' => [
-                        'title' => $title,
-                        'body' => $body,
-                    ]
-                ]
-            ];
 
+            if (in_array($deviceToken, $sentTokens)) {
+                continue;
+            }
+
+            $sentTokens[] = $deviceToken;
+
+            if (!$onlyData) {
+                $fields = [
+                    'message' => [
+                        'notification' => [
+                            'title' => $title,
+                            'body' => $body,
+                        ]
+                    ]
+                ];
+            }
             if (!empty($data)) {
                 $fields['message']['data'] = $data;
             }

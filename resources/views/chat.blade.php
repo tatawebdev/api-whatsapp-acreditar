@@ -133,7 +133,17 @@
                 </div>
 
                 <div class="js-chat-messages block-content block-content-full text-break overflow-y-auto w-100 flex-grow-1 px-lg-8 px-xlg-10 bg-body"
-                    data-chat-id="5"></div>
+                    data-chat-id="5">
+                    <div class="me-4">
+                        <div
+                            class="fs-sm d-inline-block fw-medium animated fadeIn bg-body-light border-3 px-3 py-2 mb-2 shadow-sm mw-100 border-start border-dark rounded-end">
+                            How are you? I wanted to talk about the new project. Feel free to ping me when you find
+                            some
+                            time, thanks!
+                            <div style="display: flex;flex-direction: row-reverse;">Lido</div>
+                        </div>
+                    </div>
+                </div>
 
 
                 <div class="js-chat-form block-content p-3 w-100 d-flex align-items-center bg-body-dark"
@@ -201,30 +211,19 @@
             appId: "{{ config('firebase.app_id') }}"
         };
         const vapidKey = "{{ config('firebase.vapid_key') }}";
-
-</script>
+    </script>
 
     <script type="module" src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js"></script>
 
+    <script src="{{ asset('assets/sistema/chat/chat.js') }}"></script>
+
     <script type="module" src="{{ asset('assets/sistema/chat/fcm.js') }}"></script>
     <script src="{{ asset('assets/sistema/chat/app.js') }}"></script>
 
-    <script src="{{ asset('assets/sistema/chat/chat.js') }}"></script>
 
     <script>
-        Dashmix.onLoad(function() {
-
-            Chat.addHeader(5, 'Yesterday');
-            Chat.addMessage(5, 'Hi there!');
-            Chat.addMessage(5,
-                'How are you? I wanted to talk about the new project. Feel free to ping me when you find some time, thanks!'
-            );
-            Chat.addHeader(5, 'Just Now', 'self');
-            Chat.addMessage(5, 'Hey Lisa, I’m currently available!', 'self');
-            Chat.addMessage(5, 'Let me know about the progress you’ve made, so we can move forward!', 'self');
-            Chat.addMessage(5, 'Moreover, please be sure to let Nick know about it!', 'self');
-        });
+        Dashmix.onLoad();
     </script>
 </body>
 

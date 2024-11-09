@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\FcmToken;
+use App\Models\FileModel;
+use App\Models\Message;
 use App\Services\FcmService;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
@@ -13,13 +15,14 @@ use WhatsApp\Media;
 
 class WebhookController extends Controller
 {
+    private $message = null;
     public function processWebhook(Request $request)
     {
         if ($this->isChallengeRequest($request)) {
             return $this->handleChallenge($request);
         }
 
-        // WebhookProcessor::debugOn();
+        WebhookProcessor::debugOn();
         $data = $request->getContent();
         $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
@@ -50,6 +53,7 @@ class WebhookController extends Controller
         // Construa o nome do método a ser chamado
         $methodName = 'process_' . $webhookInfo['event_type'];
 
+
         if (method_exists($this, $methodName)) {
             return $this->$methodName($webhookInfo);
         }
@@ -77,9 +81,12 @@ class WebhookController extends Controller
             'sent_by_user' => "1",
         ]);
 
+        $this->message = $data;
+
+        // WebhookProcessor::setData($data);
+
         // Obter tokens FCM
         $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
-
         // Verificar se há tokens FCM
         if (count($fcmTokens) > 0) {
             // Instanciar o serviço FCM
@@ -94,12 +101,95 @@ class WebhookController extends Controller
                 'timestamp' => "{$webhookInfo['timestamp']}",
                 'type' => $webhookInfo['event_type'],
                 'sent_by_user' => "1",
+                'chat_conversation_id' => "$conversation->id",
+                'chat_messege_id' => "$data->id",
             ];
 
             // Enviar a notificação
             $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], $content,  $notificationData);
         }
     }
+    private function process_unsupported($webhookInfo) {}
+    private function process_status($webhookInfo)
+    {
+        $message = Message::where('message_id', $webhookInfo['message_id'])->first();
+
+        if (!$message) {
+            \App\Models\ErrorLog::create([
+                'message' => 'Mensagem não encontrada para o message_id: ' . $webhookInfo['message_id'],
+                'stack_trace' => json_encode(debug_backtrace()),
+                'file' => __FILE__,
+                'line' => __LINE__,
+            ]);
+            return;
+        }
+
+        if ($message->conversation_id) {
+            $conversation = Conversation::find($message->conversation_id);
+
+            if ($conversation) {
+
+                $conversation->updated_at = now();
+                $conversation->save();
+
+                // Sequência correta dos status
+                $validStatusOrder = ['sent', 'delivered', 'read'];
+                $currentStatus = $message->status;
+
+                // Verificando a sequência do novo status com o status atual
+                $currentIndex = array_search($currentStatus, $validStatusOrder);
+                $newIndex = array_search($webhookInfo['status'], $validStatusOrder);
+
+                // Se o novo status for inválido em relação ao atual, não atualize
+                if ($newIndex === false || ($currentIndex !== false && $newIndex <= $currentIndex)) {
+                    // Se a transição for inválida, use o status atual
+                    $currentStatus = $message->status;
+                } else {
+                    // Se a transição for válida, atualize com o novo status
+                    $currentStatus = $webhookInfo['status'];
+                }
+
+                $message->status = $currentStatus;
+
+                $message->error_data = json_encode($webhookInfo['errors'] ?? []);
+
+                $message->save();
+
+
+
+                // Obter tokens FCM
+                $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
+                // Verificar se há tokens FCM
+                if (count($fcmTokens) > 0) {
+                    // Instanciar o serviço FCM
+                    $fcmService = new FcmService();
+
+                    // Preparar dados para a notificação
+                    $notificationData = [
+                        'phone' => "{$webhookInfo['celular']}",
+                        'message_id' => "{$webhookInfo['message_id']}",
+                        'type' => $webhookInfo['event_type'],
+                        'status' => $webhookInfo['status'],
+                        'sent_by_user' => "1",
+                        'chat_conversation_id' => "$conversation->id",
+                        'chat_messege_id' => "$message->id",
+                    ];
+
+                    // Enviar a notificação
+                    $fcmService->sendNotification($fcmTokens, '', '',  $notificationData);
+                }
+            } else {
+
+                \App\Models\ErrorLog::create([
+                    'message' => 'Conversa não encontrada para conversation_id: ' . $message->conversation_id,
+                    'stack_trace' => json_encode(debug_backtrace()),
+                    'file' => __FILE__,
+                    'line' => __LINE__,
+                ]);
+            }
+        }
+    }
+
     private function process_message_text($webhookInfo)
     {
         $this->createMessage($webhookInfo, $webhookInfo['message']);
@@ -147,8 +237,63 @@ class WebhookController extends Controller
         $this->document($webhookInfo, $id);
     }
 
-    private function document($webhookInfo, $id)
+    private function document($webhookInfo, $mediaId)
     {
+        $media = new Media();
+
+        $mediaInfo = $media->getMediaInfo($mediaId);
+        // if (!$mediaInfo || empty($mediaInfo['url'])) return $this->logError("URL da mídia não encontrada.");
+
+
+        // Criar ou atualizar a conversa
+        $conversation = Conversation::firstOrCreate(
+            ['from' => $webhookInfo['celular']],
+            ['contact_name' => $webhookInfo['name']]
+        );
+
+        $conversation->updated_at = now();
+        $conversation->save();
+
+
+
+        // Criar a mensagem
+        $message = $conversation->messages()->create([
+            'from' => $webhookInfo['celular'],
+            'message_id' => $webhookInfo['message_id'],
+            'content' => is_array($mediaId) ? json_encode($mediaId) : $mediaId,
+            'timestamp' => $webhookInfo['timestamp'],
+            'type' => $webhookInfo['event_type'],
+            'sent_by_user' => "1",
+        ]);
+
+        // Verificando se o arquivo já existe com o sha256 ou file_url
+        $file = FileModel::where('file_url', $mediaInfo['url'])
+            ->orWhere('file_sha256', $mediaInfo['sha256'])
+            ->first();
+
+        $fcmService = new FcmService();
+
+        // Preparar dados para a notificação
+        $notificationData = [
+            'name' => "{$webhookInfo['name']}",
+            'phone' => "{$webhookInfo['celular']}",
+            'message_id' => "{$webhookInfo['message_id']}",
+            'content' => is_array($mediaId) ? json_encode($mediaId) : $mediaId,
+            'timestamp' => "{$webhookInfo['timestamp']}",
+            'type' => $webhookInfo['event_type'],
+            'type_status' => 'load',
+            'sent_by_user' => "1",
+            'chat_conversation_id' => "$conversation->id",
+            'chat_messege_id' => "$message->id",
+        ];
+
+
+        $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
+
+        // Enviar a notificação
+        if (count($fcmTokens) > 0)
+            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], 'Novo documento',  $notificationData, true);
+
 
         $directoryPath = 'docs-whatsapp';
 
@@ -157,15 +302,33 @@ class WebhookController extends Controller
             Storage::disk('public')->makeDirectory($directoryPath);
         }
 
-
-        // Tenta baixar a mídia e verifica o resultado
-        $media = new Media();
-        if ($media->downloadMedia($id, "$directoryPath/$id")) {
-            // Cria ou recupera a conversa
-            $this->createMessage($webhookInfo, $id);
-        } else {
-            throw new \Exception("Falha ao baixar o documento: ID $id");
+        $src =   $media->downloadMedia($mediaInfo, "$directoryPath/{$mediaInfo['id']}");
+        if (!$file) {
+            $file = FileModel::create([
+                'file_sha256' => "{$mediaInfo['sha256']}",
+                'file_url' => "{$mediaInfo['url']}",
+                'file_id' => "{$mediaInfo['id']}",
+                'file_size' => "{$mediaInfo['file_size']}",
+                'file_mime_type' => "{$mediaInfo['mime_type']}",
+                'file_mime_type' => "{$mediaInfo['mime_type']}",
+                'file_src' => "{$src}",
+            ]);
         }
+
+        $notificationData['type_status'] = 'download';
+        $file = [
+            'file_sha256' => "{$mediaInfo['sha256']}",
+            'file_url' => "{$mediaInfo['url']}",
+            'file_id' => "{$mediaInfo['id']}",
+            'file_size' => "{$mediaInfo['file_size']}",
+            'file_mime_type' => "{$mediaInfo['mime_type']}",
+            'file_mime_type' => "{$mediaInfo['mime_type']}",
+            'file_src' => "{$src}",
+        ];
+        $notificationData = array_merge($notificationData, $file);
+
+        if (count($fcmTokens) > 0)
+            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], 'Novo documento',  $notificationData, true);
     }
 
 

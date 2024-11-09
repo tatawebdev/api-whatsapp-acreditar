@@ -72,45 +72,48 @@ class WebhookProcessor
 
     public static function getMockado()
     {
-        $json = '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-            "id": "463862936810412",
-            "changes": [
-                {
-                    "value": {
-                        "messaging_product": "whatsapp",
-                        "metadata": {
-                            "display_phone_number": "15551918890",
-                            "phone_number_id": "414634731742393"
+        $json = '  {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "id": "463862936810412",
+                "changes": [
+                    {
+                        "value": {
+                            "messaging_product": "whatsapp",
+                            "metadata": {
+                                "display_phone_number": "15551918890",
+                                "phone_number_id": "414634731742393"
+                            },
+                            "contacts": [
+                                {
+                                    "profile": {
+                                        "name": "Jer\u00ea"
+                                    },
+                                    "wa_id": "5511951936777"
+                                }
+                            ],
+                            "messages": [
+                                {
+                                    "from": "5511951936777",
+                                    "id": "wamid.HBgNNTUxMTk1MTkzNjc3NxUCABIYIDgzQjAyQjQwRjg2ODdFNzZDRDcwNzRGQURGNDk2MDQ3AA==",
+                                    "timestamp": "1731182577",
+                                    "type": "image",
+                                    "image": {
+                                        "mime_type": "image\/jpeg",
+                                        "sha256": "u88Iu3VUiSrT6WSl3wYFffC9CW5FiMol213UtTsGK6M=",
+                                        "id": "882947433943001"
+                                    }
+                                }
+                            ]
                         },
-                        "contacts": [
-                            {
-                                "profile": {
-                                    "name": "Tata Web"
-                                },
-                                "wa_id": "5511964870744"
-                            }
-                        ],
-                        "messages": [
-                            {
-                                "from": "5511964870744",
-                                "id": "wamid.HBgNNTUxMTk2NDg3MDc0NBUCABIYFjNFQjA3RkM1QzVFRTI2OTVDNkJGQ0QA",
-                                "timestamp": "1729953067",
-                                "text": {
-                                    "body": "ola"
-                                },
-                                "type": "text"
-                            }
-                        ]
-                    },
-                    "field": "messages"
-                }
-            ]
-        }
-    ]
-}';
+                        "field": "messages"
+                    }
+                ]
+            }
+        ]
+    }
+';
 
         return [json_decode($json, true)];
     }
@@ -167,8 +170,9 @@ class WebhookProcessor
             $result['event_type'] = 'status';
             $result['celular'] = $changesValue['statuses'][0]['recipient_id'];
             $result['status'] = $changesValue['statuses'][0]['status'];
-            $result['status_id'] = $changesValue['statuses'][0]['id'];
+            $result['message_id'] = $changesValue['statuses'][0]['id'];
             $result['conversation'] = $changesValue['statuses'][0]['conversation'] ?? null;
+            $result['errors'] = $changesValue['statuses'][0]['errors'] ?? null;
         } elseif (isset($changesValue['messages'])) {
             $message = $changesValue['messages'][0];
             $result['celular'] = $message['from'];

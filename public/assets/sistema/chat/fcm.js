@@ -25,9 +25,9 @@ function requestNotificationPermission() {
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/firebase-messaging-sw.js')
-                    // .then((registration) => {
-                    //     console.log('Service Worker registrado com sucesso:', registration);
-                    // })
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                    })
                     .catch((error) => {
                         console.log('Falha ao registrar o Service Worker:', error);
                     });
@@ -69,7 +69,8 @@ requestNotificationPermission();
 
 // Listener para mensagens recebidas em primeiro plano
 onMessage(messaging, payload => {
-    console.log('Mensagem recebida:', payload);
+    // console.log('Mensagem recebida:', payload);
+    chatMessege(payload)
     // const message = payload.data.message;
     // const username = payload.data.username;
     // displayMessage(username, message);

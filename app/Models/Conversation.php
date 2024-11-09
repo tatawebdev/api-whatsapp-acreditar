@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
+
+    protected $table = 'conversations';
+
     protected $fillable = ['from', 'contact_name', 'updated_at'];
 
     public function messages()

@@ -130,7 +130,16 @@ const loadConversationDetails = () => {
                         Chat.addMessage(conversationOne.id, `Imagem: ${message.content}`, position); // Adiciona imagem
                         break;
                     default:
-                        Chat.addMessage(conversationOne.id, message.content, position); // Adiciona mensagem de texto
+
+                        console.log(message)
+
+                        Chat.addMessage({
+                            chatId: conversationOne.id,
+                            messageText: message.content,
+                            position,
+                            messageData: message
+                        });
+
                         break;
                 }
             });
@@ -161,7 +170,6 @@ const handleImageUpload = (chatId) => {
 }
 
 const enviarMensagemWhatsApp = () => {
-    console.log("aqui");
 
     // Verifica se a conversa tem um valor válido para 'from'
     if (!conversationOne.from || !conversationOne.contact_name) {
@@ -180,9 +188,20 @@ const enviarMensagemWhatsApp = () => {
         return; // Interrompe a execução se a mensagem estiver vazia
     }
 
+
+
     // Chama a função ajaxSimpleRequest para enviar os dados
     ajaxSimpleRequest('/chat/send', { from, contact_name, content }, function (response) {
-        console.log('Mensagem enviada com sucesso');
+
+        messageData = response
+
+        Chat.addMessage({
+            chatId: conversationOne.id,
+            messageText: content,
+            position: 'self',
+            messageData
+        });
+
     });
 }
 
@@ -197,4 +216,80 @@ $('#uploadImageButton').on('click', function () {
 // Evento que executa a função assim que o DOM estiver carregado
 $(document).ready(function () {
     loadConversations();
+    function getNewMessage() {
+        const request = indexedDB.open('chatDatabase', 1);
+
+        request.onsuccess = function (event) {
+            const db = event.target.result;
+            const transaction = db.transaction('messages', 'readonly');
+            const store = transaction.objectStore('messages');
+
+            const getRequest = store.get('newMessage');
+
+            getRequest.onsuccess = function () {
+                const message = getRequest.result ? getRequest.result.value : null;
+                if (message) {
+                    alert('Mensagem recuperada: ' + message);
+                }
+            };
+        };
+    }
+
+    // Chamar a função para verificar por novas mensagens assim que o app abrir
+    window.onload = function () {
+        getNewMessage();
+    };
+
 });
+
+
+function chatMessege(payload) {
+    if (payload?.data?.type == 'status') {
+        chatStatusMessege(payload)
+    } else {
+        chatNewMessege(payload)
+    }
+}
+function chatStatusMessege(payload) {
+    const { message_id, status } = payload?.data;
+
+    const validStatusOrder = ['sent', 'delivered', 'read'];
+
+    // Pegando o status atual exibido na página
+    const currentStatus = document.getElementById('status_' + message_id)?.innerHTML;
+
+    // Verificando a sequência do novo status com o status atual
+    const currentIndex = currentStatus ? validStatusOrder.indexOf(currentStatus) : -1;
+    const newIndex = validStatusOrder.indexOf(status);
+
+
+    // Se o novo status for inválido em relação ao status atual (não segue a sequência), não atualize
+    if (newIndex !== -1 && (currentIndex === -1 || newIndex > currentIndex ) || status == 'failed' ) {
+        document.getElementById('status_' + message_id).innerHTML = status;
+    } else {
+        console.log(currentStatus, status );
+        console.log('Tentativa de transição inválida de status. Status não alterado.');
+    }
+}
+function chatNewMessege(payload) {
+    console.log(payload)
+    const isSelf = !payload.data?.sent_by_user;
+    const position = isSelf ? 'self' : '';
+    Chat.addMessage({
+        chatId: payload.data.chat_conversation_id,
+        messageText: payload.data.content,
+        position
+    }); // Adiciona mensagem de texto
+
+
+}
+function checkLocalStorage() {
+    const message = localStorage.getItem('newMessage');
+    if (message) {
+        console.log("Nova mensagem:", message);
+
+        // Opcional: remova o item após o console para evitar múltiplas execuções
+        localStorage.removeItem('newMessage');
+    }
+}
+
