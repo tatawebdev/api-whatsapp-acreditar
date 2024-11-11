@@ -146,7 +146,8 @@
                 </div>
 
 
-                <div class="js-chat-form block-content p-3 w-100 d-flex align-items-center bg-body-dark"
+                <div id="chat-form-container"
+                    class="js-chat-form block-content p-3 w-100  align-items-center bg-body-dark"
                     style="min-height: 70px; height: 70px;">
                     <form class="w-100" action="db_chat.html" method="POST">
                         <div class="input-group dropup">
@@ -181,6 +182,7 @@
                             <input type="file" id="imageUpload" class="d-none" accept="image/*">
                         </div>
                     </form>
+                    <button onclick="enviarRequisicao()">Enviar Requisição</button>
 
 
 
@@ -223,7 +225,32 @@
 
 
     <script>
-        Dashmix.onLoad();
+        function enviarRequisicao() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "https://api-whatsapp-acreditar.tataweb.com.br/api/webhook/mockado", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) { // Requisição completada
+                    if (xhr.status === 200) {
+                        console.log("Requisição enviada com sucesso!");
+                    } else {
+                        console.log("Erro ao enviar a requisição.");
+                    }
+                }
+            };
+
+            var data = JSON.stringify({
+                mensagem: "Teste de envio via AJAX"
+            });
+            xhr.send(data);
+        }
+    </script>
+
+    <script>
+        Dashmix.onLoad(function() {
+            Chat.addImage(5, 'images/200x200.png');
+        });
     </script>
 </body>
 

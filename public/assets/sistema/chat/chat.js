@@ -11,17 +11,18 @@ const loadConversations = () => {
             let status = conversation.status || 'online';  // Se não tiver status, assume 'online'
             let avatar = conversation.avatar || 'assets/media/avatars/avatar7.jpg';  // Se não tiver avatar, usa o padrão
 
-            let statusClass = status == 'online' ? 'bg-success' :
-                status == 'busy' ? 'bg-danger' :
-                    status == 'away' ? 'bg-warning' :
-                        'bg-muted';
+            const conversationEnd = new Date(conversation.session_end);
+            const currentTime = new Date();
+
+            let statusClass = conversationEnd > currentTime ? 'bg-success' : 'bg-danger';
+
 
             let conversationItem = `
-                <li data-id="${conversation.id}" data-contact_name="${conversation.contact_name}" data-from="${conversation.from}">
+                <li data-id="${conversation.id}" data-contact_name="${conversation.contact_name}" data-from="${conversation.from}" data-session_end="${conversation.session_end}" >
                     <a class="d-flex py-2" href="javascript:void(0)">
                         <div class="flex-shrink-0 mx-3 overlay-container">
                             <img class="img-avatar img-avatar48" src="${avatar}" alt="">
-                            <span class="overlay-item item item-tiny item-circle border border-2 border-white ${statusClass}"></span>
+                            <span data-session_end="${conversation.session_end}" class="overlay-item item item-tiny item-circle border border-2 border-white ${statusClass}"></span>
                         </div>
                         <div class="flex-grow-1">
                             <div class="fw-semibold">${conversation.contact_name}</div>
@@ -37,10 +38,22 @@ const loadConversations = () => {
 
         // Adicionar o evento de clique para cada item de conversa
         $('#online-conversations ul li, #busy-conversations ul li, #away-conversations ul li, #offline-conversations ul li').on('click', function () {
+
+            const session_end = $(this).data('session_end');
+
+            if (session_end == "null" || session_end == null) {
+                alertify.error(`Erro: Não foi possível obter o horário de término desta sessão. {session_end: ${session_end}}`);
+                return;
+            }
+
+
+
+
             conversationOne = {
                 id: $(this).data('id'),
                 contact_name: $(this).data('contact_name'),
                 from: $(this).data('from'),
+                session_end,
             };
 
             loadConversationDetails();
@@ -48,7 +61,78 @@ const loadConversations = () => {
     });
 };
 
+function inicializarChat(conversation) {
+    console.log(conversationOne)
+    const chatMessages = document.querySelector('.js-chat-messages');
+    const chatSendMessages = document.querySelector('input.js-chat-input');
+    const conversationHeader = document.querySelector('.block-title');
 
+    if (chatMessages && chatSendMessages && conversationHeader) {
+        // Define os atributos de ID da conversa nos elementos de chat
+        chatMessages.setAttribute('data-chat-id', conversation.id);
+        chatSendMessages.setAttribute('data-target-chat-id', conversation.id);
+
+        // Limpa as mensagens e reseta o scroll
+        chatMessages.innerHTML = "";
+        chatMessages.scrollTop = 0;
+
+        // Chama a função de upload de imagem com o ID da conversa
+        handleImageUpload(conversation.id);
+
+        // Define o cabeçalho da conversa com nome e telefone do contato
+        const contactName = conversation.contact_name || 'Nome do Contato'; // Valor padrão
+        const contactPhone = conversation.from || 'Telefone não disponível'; // Valor padrão
+
+        const conversationEnd = new Date(conversation.session_end);
+        const currentTime = new Date();
+
+
+        const formattedEndDate = formatCustomDate(conversationEnd); // Aqui usamos a função personalizada para a data
+        const formattedEndTime = conversationEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        // Exibir a mensagem
+
+
+        conversationHeader.innerHTML = `
+            <img class="img-avatar img-avatar32" src="${conversation.avatar || 'assets/media/avatars/avatar7.jpg'}" alt="">
+            <a class="fs-sm fw-semibold ms-2" href="javascript:void(0)">
+                ${contactName} - ${contactPhone}
+            </a>
+            <p id="session_current">
+                Sessão até: ${formattedEndDate} às ${formattedEndTime}.
+            <p>
+            `;
+
+
+        if (conversationEnd <= currentTime) {
+            document.getElementById('chat-form-container').style.display = 'none';
+        } else {
+            document.getElementById('chat-form-container').style.display = 'flex';
+        }
+
+
+    } else {
+        console.error("Elemento de mensagens, input de chat ou cabeçalho não encontrado.");
+    }
+}
+function formatCustomDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Verifica se a data é hoje, ontem ou amanhã
+    if (date.toDateString() === today.toDateString()) {
+        return 'Hoje';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Ontem';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+        return 'Amanhã';
+    } else {
+        return date.toLocaleDateString('pt-BR');
+    }
+}
 const loadConversationDetails = () => {
     const detailsUrl = `/chat/conversations/${conversationOne.id}`;
     const requestData = { id: conversationOne.id };
@@ -57,37 +141,8 @@ const loadConversationDetails = () => {
     ajaxSimpleRequest(detailsUrl, requestData, (response) => {
         console.log('Detalhes da conversa:', JSON.stringify(response));
 
+        inicializarChat(conversationOne);
 
-
-
-
-        const chatMessages = document.querySelector('.js-chat-messages');
-        const chatSendMessages = document.querySelector('input.js-chat-input');
-        const conversationHeader = document.querySelector('.block-title');  // Título da conversa
-
-        if (chatMessages) {
-            chatMessages.setAttribute('data-chat-id', conversationOne.id);
-            chatSendMessages.setAttribute('data-target-chat-id', conversationOne.id);
-
-            chatMessages.innerHTML = ""; // Limpa as mensagens
-            chatMessages.scrollTop = 0;
-        } else {
-            console.error("Elemento de mensagens não encontrado.");
-        }
-
-        handleImageUpload(conversationOne.id);
-
-        if (conversationHeader) {
-            const contactName = conversationOne.contact_name || 'Nome do Contato'; // Se o nome não for encontrado, use um valor padrão
-            const contactPhone = conversationOne.from || 'Telefone não disponível'; // Se o telefone não for encontrado, use um valor padrão
-
-            conversationHeader.innerHTML = `
-                <img class="img-avatar img-avatar32" src="${response.avatar || 'assets/media/avatars/avatar7.jpg'}" alt="">
-                <a class="fs-sm fw-semibold ms-2" href="javascript:void(0)">
-                    ${contactName} - ${contactPhone}
-                </a>
-            `;
-        }
         // Verifique se há mensagens
         if (response && response.data && response.data.length > 0) {
             let lastHeader = '';
@@ -126,8 +181,15 @@ const loadConversationDetails = () => {
                 // Verifica o tipo de mensagem e adiciona ao chat
                 switch (message.type) {
                     case 'image':
-                        Chat.addImage(conversationOne.id, 'images/200x200.png', position);
-                        Chat.addMessage(conversationOne.id, `Imagem: ${message.content}`, position); // Adiciona imagem
+                        Chat.addImage(
+                            {
+                                chatId: conversationOne.id,
+                                imageUrl: 'images/200x200.png',
+                                position,
+                                messageData: message
+                            }
+                        );
+
                         break;
                     default:
 
@@ -156,15 +218,29 @@ const handleImageUpload = (chatId) => {
         const file = event.target.files[0];
 
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const imageUrl = e.target.result; // URL da imagem carregada
-                const position = "self"; // Definir posição como 'self' para o envio do usuário
-                console.log(chatId); // Exibe o chatId para depuração
-                // Adiciona a imagem no chat
-                Chat.addImage(chatId, imageUrl, position);
-            };
-            reader.readAsDataURL(file); // Lê o arquivo da imagem
+
+            let from = conversationOne.from;
+            let contact_name = conversationOne.contact_name;
+        
+            ajaxFile('/chat/send/image', file, { chatId, from, contact_name }, function (response) {
+                // Suponha que a resposta seja um objeto com a URL da imagem
+                console.log(response);
+
+                if (response && response.imageUrl) {
+                    const imageUrl = response.imageUrl;
+                    const position = "self"; // Posição como 'self' para o envio do usuário
+
+                    // Exibe o chatId para depuração
+                    console.log(chatId);
+
+                    // Adiciona a imagem ao chat
+                    Chat.addImage({
+                        chatId,
+                        imageUrl,
+                        position,
+                    });
+                }
+            });
         }
     });
 }
@@ -216,34 +292,38 @@ $('#uploadImageButton').on('click', function () {
 // Evento que executa a função assim que o DOM estiver carregado
 $(document).ready(function () {
     loadConversations();
-    function getNewMessage() {
-        const request = indexedDB.open('chatDatabase', 1);
+    // function getNewMessage() {
+    //     const request = indexedDB.open('chatDatabase', 1);
 
-        request.onsuccess = function (event) {
-            const db = event.target.result;
-            const transaction = db.transaction('messages', 'readonly');
-            const store = transaction.objectStore('messages');
+    //     request.onsuccess = function (event) {
+    //         const db = event.target.result;
+    //         const transaction = db.transaction('messages', 'readonly');
+    //         const store = transaction.objectStore('messages');
 
-            const getRequest = store.get('newMessage');
+    //         const getRequest = store.get('newMessage');
 
-            getRequest.onsuccess = function () {
-                const message = getRequest.result ? getRequest.result.value : null;
-                if (message) {
-                    alert('Mensagem recuperada: ' + message);
-                }
-            };
-        };
-    }
+    //         getRequest.onsuccess = function () {
+    //             const message = getRequest.result ? getRequest.result.value : null;
+    //             if (message) {
+    //                 alert('Mensagem recuperada: ' + message);
+    //             }
+    //         };
+    //     };
+    // }
 
-    // Chamar a função para verificar por novas mensagens assim que o app abrir
-    window.onload = function () {
-        getNewMessage();
-    };
+    // // Chamar a função para verificar por novas mensagens assim que o app abrir
+    // window.onload = function () {
+    //     getNewMessage();
+    // };
 
 });
 
 
 function chatMessege(payload) {
+    if (payload?.data?.session_end)
+        checkSessionData(payload.data.session_end)
+
+
     if (payload?.data?.type == 'status') {
         chatStatusMessege(payload)
     } else {
@@ -264,24 +344,70 @@ function chatStatusMessege(payload) {
 
 
     // Se o novo status for inválido em relação ao status atual (não segue a sequência), não atualize
-    if (newIndex !== -1 && (currentIndex === -1 || newIndex > currentIndex ) || status == 'failed' ) {
+    if (newIndex !== -1 && (currentIndex === -1 || newIndex > currentIndex) || status == 'failed') {
         document.getElementById('status_' + message_id).innerHTML = status;
     } else {
-        console.log(currentStatus, status );
+        console.log(currentStatus, status);
         console.log('Tentativa de transição inválida de status. Status não alterado.');
     }
 }
 function chatNewMessege(payload) {
-    console.log(payload)
     const isSelf = !payload.data?.sent_by_user;
     const position = isSelf ? 'self' : '';
-    Chat.addMessage({
-        chatId: payload.data.chat_conversation_id,
-        messageText: payload.data.content,
-        position
-    }); // Adiciona mensagem de texto
 
 
+
+
+    switch (payload.data?.type) {
+        case 'image':
+            if (payload.data?.type_status == 'new') {
+                console.log(payload, 'image_log_new')
+                Chat.addImage(
+                    {
+                        chatId: conversationOne.id,
+                        imageUrl: 'images/200x200.png',
+                        position,
+                        messageData: payload.data
+                    }
+                );
+            } else if (payload.data?.type_status == 'src') {
+                console.log(
+                    document.getElementById('img_' + payload.data?.message_id))
+                document.getElementById('img_' + payload.data?.message_id).src = payload.data?.file_src;
+
+
+            }
+
+            break;
+        default:
+
+            Chat.addMessage({
+                chatId: payload.data.chat_conversation_id,
+                messageText: payload.data.content,
+                position
+            });
+
+
+            break;
+    }
+
+
+}
+
+function checkSessionData(session_end) {
+    const conversationEnd = new Date(session_end);
+    const currentTime = new Date();
+
+    const formattedEndDate = formatCustomDate(conversationEnd);
+    const formattedEndTime = conversationEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    if (conversationEnd <= currentTime) {
+        // Ajusta a mensagem se o horário já passou
+        document.getElementById("session_current").innerHTML = `Sessão já encerrada em ${formattedEndDate} às ${formattedEndTime}.`;
+    } else {
+        // Caso a sessão ainda esteja ativa
+        document.getElementById("session_current").innerHTML = `Sessão até: ${formattedEndDate} às ${formattedEndTime}.`;
+    }
 }
 function checkLocalStorage() {
     const message = localStorage.getItem('newMessage');
@@ -291,5 +417,24 @@ function checkLocalStorage() {
         // Opcional: remova o item após o console para evitar múltiplas execuções
         localStorage.removeItem('newMessage');
     }
-}
 
+}
+conversationOne = {
+    id: "12345",
+    contact_name: "João da Silva",
+    from: "(11) 98765-4321",
+    avatar: "https://example.com/avatar.jpg"
+};
+
+
+function updateSessionStatus() {
+    const currentTime = new Date();
+
+    $('span[data-session_end]').each(function () {
+        const sessionEnd = new Date($(this).data('session_end'));
+        console.log(sessionEnd)
+        const statusClass = sessionEnd > currentTime ? 'bg-success' : 'bg-danger';
+        $(this).removeClass('bg-success bg-danger').addClass(statusClass);
+    });
+}
+setInterval(updateSessionStatus, 1000 * 60);

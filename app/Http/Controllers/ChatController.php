@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\ConversationSession;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
@@ -16,18 +18,33 @@ class ChatController extends Controller
     public function getConversations()
     {
         $conversations = Conversation::leftJoin('messages', 'conversations.id', '=', 'messages.conversation_id')
+            ->leftJoin(
+                'conversation_sessions',
+                function ($join) {
+                    $join->on('conversations.id', '=', 'conversation_sessions.conversation_id')
+                        ->whereRaw('conversation_sessions.session_end = (select max(session_end) from conversation_sessions where conversation_sessions.conversation_id = conversations.id)');
+                }
+            )
             ->select(
                 'conversations.id',
                 'conversations.contact_name',
                 'conversations.from',
-                'conversations.updated_at'
+                'conversations.updated_at',
+                'conversation_sessions.session_end'
             )
-            ->groupBy('conversations.id', 'conversations.contact_name', 'conversations.from', 'conversations.updated_at')
+            ->groupBy(
+                'conversations.id',
+                'conversations.contact_name',
+                'conversations.from',
+                'conversations.updated_at',
+                'conversation_sessions.session_end'
+            )
             ->orderBy('conversations.updated_at', 'desc')
             ->get();
 
         return response()->json($conversations);
     }
+
 
 
     public function getMessages($id = null)
@@ -54,6 +71,59 @@ class ChatController extends Controller
 
         return $returnMeta;
     }
+    private function sendImageWhatsApp($phone, $url)
+    {
+        $objMensagem = \WhatsApp\Message::getInstance();
+        $objMensagem->setRecipientNumber($phone);
+        $returnMeta = $objMensagem->sendLinkImageMessage($url);
+
+        return $returnMeta;
+    }
+
+
+    public function sendImage(Request $request)
+    {
+        // Validação do arquivo
+        $validated = $request->validate([
+            'from' => 'required',
+            'contact_name' => 'required',
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,svg',
+        ]);
+
+        $session = ConversationSession::activeSession($validated['from']);
+
+        if (!$session) {
+            return response()->json([
+                'error' => 'Não é possível enviar a mensagem. A sessão de 24 horas para esta conversa expirou.',
+            ], 403);
+        }
+
+        // Verificar se há um arquivo no request
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
+            // Salvar a imagem no diretório 'public/images'
+            $imagePath = $request->file('file')->store('images', 'public');
+            $imageUrl = Storage::url($imagePath);
+
+
+
+            $returnMeta = $this->sendImageWhatsApp($validated['from'], $imageUrl);
+
+
+
+
+            // Retornar a URL da imagem para ser usada no frontend
+            return response()->json([
+                'imageUrl' => Storage::url($imagePath),
+            ]);
+        }
+
+        // Se falhar, retornar um erro
+        return response()->json([
+            'error' => 'Falha no upload da imagem.',
+        ], 400);
+    }
+
+
     public function sendMessage(Request $request)
     {
 
@@ -64,8 +134,15 @@ class ChatController extends Controller
             'sent_by_user' => 'nullable|boolean',
         ]);
 
+        $session = ConversationSession::activeSession($validated['from']);
 
-        $returnMeta = $this->sendMessageWhatsApp($validated['from'], $validated['content']);
+        if (!$session) {
+            return response()->json([
+                'error' => 'Não é possível enviar a mensagem. A sessão de 24 horas para esta conversa expirou.',
+            ], 403);
+        }
+
+        $returnMeta = $this->sendImageWhatsApp($validated['from'], $validated['content']);
         // Verifica se o envio pelo WhatsApp foi bem-sucedido
         if (empty($returnMeta['messages'][0]['id'])) {
             return response()->json([
@@ -79,11 +156,11 @@ class ChatController extends Controller
             ['contact_name' => $validated['contact_name']]
         );
 
-        // Atualiza o campo updated_at da conversa
         $conversation->updated_at = now();
 
-        // Salva a instância da conversa
         $conversation->save();
+
+
 
         // Criação de uma nova mensagem associada à conversa
         $message = $conversation->messages()->create([

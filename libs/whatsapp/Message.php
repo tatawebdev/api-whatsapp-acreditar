@@ -92,7 +92,7 @@ class Message extends CurlHttpClient
 
         return $this->sendMessage();
     }
-    public function sendLinkImageMessage($mediaObjectId)
+    public function sendLinkImageMessage($url)
     {
         $this->array = [
             'messaging_product' => 'whatsapp',
@@ -100,10 +100,9 @@ class Message extends CurlHttpClient
             'to' => self::$number,
             'type' => 'image',
             'image' => [
-                'link' => $mediaObjectId
+                'link' => $url
             ]
         ];
-
         return $this->sendMessage();
     }
     public function sendDocumentMessage($mediaObjectId, $document = "document")

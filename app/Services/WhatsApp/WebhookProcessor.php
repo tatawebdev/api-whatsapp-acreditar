@@ -72,47 +72,47 @@ class WebhookProcessor
 
     public static function getMockado()
     {
-        $json = '  {
-        "object": "whatsapp_business_account",
-        "entry": [
-            {
-                "id": "463862936810412",
-                "changes": [
-                    {
-                        "value": {
-                            "messaging_product": "whatsapp",
-                            "metadata": {
-                                "display_phone_number": "15551918890",
-                                "phone_number_id": "414634731742393"
-                            },
-                            "contacts": [
-                                {
-                                    "profile": {
-                                        "name": "Jer\u00ea"
-                                    },
-                                    "wa_id": "5511951936777"
-                                }
-                            ],
-                            "messages": [
-                                {
-                                    "from": "5511951936777",
-                                    "id": "wamid.HBgNNTUxMTk1MTkzNjc3NxUCABIYIDgzQjAyQjQwRjg2ODdFNzZDRDcwNzRGQURGNDk2MDQ3AA==",
-                                    "timestamp": "1731182577",
-                                    "type": "image",
-                                    "image": {
-                                        "mime_type": "image\/jpeg",
-                                        "sha256": "u88Iu3VUiSrT6WSl3wYFffC9CW5FiMol213UtTsGK6M=",
-                                        "id": "882947433943001"
-                                    }
-                                }
-                            ]
+        $json = '{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "463862936810412",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551918890",
+                            "phone_number_id": "414634731742393"
                         },
-                        "field": "messages"
-                    }
-                ]
-            }
-        ]
-    }
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Jer\u00ea"
+                                },
+                                "wa_id": "5511951936777"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "5511951936777",
+                                "id": "wamid.HBgNNTUxMTk1MTkzNjc3NxUCABIYFjNFQjAzRTA4RjUwMjU0RDQwMzc1NDcA",
+                                "timestamp": "1731189801",
+                                "type": "image",
+                                "image": {
+                                    "mime_type": "image\/jpeg",
+                                    "sha256": "HcnP3md8J2dLG\/qPKzb\/KO9TSs8G\/HdsXjWWsPIK0Pk=",
+                                    "id": "3891487917777137"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
 ';
 
         return [json_decode($json, true)];
@@ -172,6 +172,7 @@ class WebhookProcessor
             $result['status'] = $changesValue['statuses'][0]['status'];
             $result['message_id'] = $changesValue['statuses'][0]['id'];
             $result['conversation'] = $changesValue['statuses'][0]['conversation'] ?? null;
+            $result['pricing'] = $changesValue['statuses'][0]['pricing'] ?? null;
             $result['errors'] = $changesValue['statuses'][0]['errors'] ?? null;
         } elseif (isset($changesValue['messages'])) {
             $message = $changesValue['messages'][0];

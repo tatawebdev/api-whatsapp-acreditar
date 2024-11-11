@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
 {
-    protected $fillable = ['conversation_id', 'content', 'sent_by_user', 'from', 'message_id', 'timestamp', 'type', 'status', 'error_data'];
+    protected $fillable = ['conversation_id', 'content', 'sent_by_user', 'from', 'message_id', 'timestamp', 'type', 'status', 'error_data', 'conversation_session_id'];
 
     protected $table = 'messages';
 
@@ -18,5 +18,8 @@ class Message extends Model
     {
         return $this->hasOne(FileModel::class);
     }
-
+    public function conversation_section()
+    {
+        return $this->hasOne(ConversationSession::class, 'id', 'conversation_session_id');
+    }
 }

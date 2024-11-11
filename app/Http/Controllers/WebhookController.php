@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
+use App\Models\ConversationSession;
 use App\Models\FcmToken;
 use App\Models\FileModel;
 use App\Models\Message;
 use App\Services\FcmService;
 use Illuminate\Http\Request;
 use App\Services\WhatsApp\WebhookProcessor;
+use Carbon\Carbon;
 use Hamcrest\Arrays\IsArray;
 use Illuminate\Support\Facades\Storage;
 use WhatsApp\Media;
@@ -42,7 +44,7 @@ class WebhookController extends Controller
     public function processWebhookMockado(Request $request)
     {
         WebhookProcessor::debugOn();
-        $data = $request->getContent();
+        $data = json_encode(WebhookProcessor::getMockado()[0]);
         $webhookInfo = WebhookProcessor::tratarWebhookWhatsApp($data);
 
 
@@ -58,6 +60,18 @@ class WebhookController extends Controller
             return $this->$methodName($webhookInfo);
         }
     }
+    function sendNotificationToAllUsers($data, $title = '', $body = '')
+    {
+        $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
+
+        if (count($fcmTokens) > 0) {
+            $fcmService = new FcmService();
+
+            $onlyData = count($data) > 0 && !$title && !$body;
+
+            $fcmService->sendNotification($fcmTokens, $title, $body, $data, $onlyData);
+        }
+    }
 
 
     private function createMessage($webhookInfo, $content)
@@ -71,6 +85,12 @@ class WebhookController extends Controller
         $conversation->updated_at = now();
         $conversation->save();
 
+        $session = ConversationSession::activeSession($webhookInfo['celular']);
+
+        if (!$session) {
+            $session = ConversationSession::createNewSession($conversation->id, $webhookInfo['celular']);
+        }
+
         // Criar a mensagem
         $data = $conversation->messages()->create([
             'from' => $webhookInfo['celular'],
@@ -79,35 +99,29 @@ class WebhookController extends Controller
             'timestamp' => $webhookInfo['timestamp'],
             'type' => $webhookInfo['event_type'],
             'sent_by_user' => "1",
+            'conversation_session_id' => $session->id,
         ]);
 
         $this->message = $data;
 
         // WebhookProcessor::setData($data);
 
-        // Obter tokens FCM
-        $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
-        // Verificar se há tokens FCM
-        if (count($fcmTokens) > 0) {
-            // Instanciar o serviço FCM
-            $fcmService = new FcmService();
+        $notificationData = [
+            'name' => "{$webhookInfo['name']}",
+            'phone' => "{$webhookInfo['celular']}",
+            'message_id' => "{$webhookInfo['message_id']}",
+            'content' => is_array($content) ? json_encode($content) : $content,
+            'timestamp' => "{$webhookInfo['timestamp']}",
+            'type' => $webhookInfo['event_type'],
+            'sent_by_user' => "1",
+            'chat_conversation_id' => "$conversation->id",
+            'chat_messege_id' => "$data->id",
+            'session_end' => "$session->session_end",
+        ];
 
-            // Preparar dados para a notificação
-            $notificationData = [
-                'name' => "{$webhookInfo['name']}",
-                'phone' => "{$webhookInfo['celular']}",
-                'message_id' => "{$webhookInfo['message_id']}",
-                'content' => is_array($content) ? json_encode($content) : $content,
-                'timestamp' => "{$webhookInfo['timestamp']}",
-                'type' => $webhookInfo['event_type'],
-                'sent_by_user' => "1",
-                'chat_conversation_id' => "$conversation->id",
-                'chat_messege_id' => "$data->id",
-            ];
 
-            // Enviar a notificação
-            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], $content,  $notificationData);
-        }
+
+        $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], $content);
     }
     private function process_unsupported($webhookInfo) {}
     private function process_status($webhookInfo)
@@ -153,31 +167,60 @@ class WebhookController extends Controller
 
                 $message->error_data = json_encode($webhookInfo['errors'] ?? []);
 
+
+                if (!$message->conversation_session_id) {
+                    $session = ConversationSession::activeSession($webhookInfo['celular']);
+
+                    if ($session) {
+                        $message->conversation_session_id = $session->id;
+                    }
+                }
+                if ($message->conversation_section) {
+                    // Dados que podem ser atualizados na seção da conversa
+                    $fields = [
+                        'whatsapp_conversation_id' => $webhookInfo['conversation']['id'] ?? null,
+                        'whatsapp_origin_type' => $webhookInfo['conversation']['origin']['type'] ?? null,
+                        'whatsapp_expiration_timestamp' => $webhookInfo['conversation']['expiration_timestamp'] ?? null,
+                        'whatsapp_billable' => $webhookInfo['pricing']['billable'] ?? null,
+                        'whatsapp_pricing_model' => $webhookInfo['pricing']['pricing_model'] ?? null,
+                        'whatsapp_pricing_category' => $webhookInfo['pricing']['category'] ?? null,
+                    ];
+
+                    // Verificar se a data de expiração precisa ser atualizada
+                    if ($message->conversation_section->whatsapp_expiration_timestamp)
+                        $message->conversation_section->session_end = Carbon::createFromTimestamp($message->conversation_section->whatsapp_expiration_timestamp);
+
+                    // Atualizar os campos caso o valor não seja nulo e não esteja definido
+                    foreach ($fields as $field => $value) {
+                        if ($value !== null && !isset($message->conversation_section->$field)) {
+                            $message->conversation_section->$field = $value;
+                        }
+                    }
+
+                    // Salvar se algum campo foi atualizado
+                    if ($message->conversation_section->isDirty()) {
+                        $message->conversation_section->save();
+                    }
+                }
+
+                // $webhookInfo['message_id']}
+
                 $message->save();
 
 
+                $notificationData = [
+                    'phone' => "{$webhookInfo['celular']}",
+                    'message_id' => "{$webhookInfo['message_id']}",
+                    'type' => $webhookInfo['event_type'],
+                    'status' => $webhookInfo['status'],
+                    'sent_by_user' => "1",
+                    'chat_conversation_id' => "$conversation->id",
+                    'chat_messege_id' => "$message->id",
+                    'session_end' => "{$message->conversation_section->session_end}",
+                ];
 
-                // Obter tokens FCM
-                $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
-                // Verificar se há tokens FCM
-                if (count($fcmTokens) > 0) {
-                    // Instanciar o serviço FCM
-                    $fcmService = new FcmService();
-
-                    // Preparar dados para a notificação
-                    $notificationData = [
-                        'phone' => "{$webhookInfo['celular']}",
-                        'message_id' => "{$webhookInfo['message_id']}",
-                        'type' => $webhookInfo['event_type'],
-                        'status' => $webhookInfo['status'],
-                        'sent_by_user' => "1",
-                        'chat_conversation_id' => "$conversation->id",
-                        'chat_messege_id' => "$message->id",
-                    ];
-
-                    // Enviar a notificação
-                    $fcmService->sendNotification($fcmTokens, '', '',  $notificationData);
-                }
+                // Enviar a notificação
+                $this->sendNotificationToAllUsers($notificationData);
             } else {
 
                 \App\Models\ErrorLog::create([
@@ -271,8 +314,6 @@ class WebhookController extends Controller
             ->orWhere('file_sha256', $mediaInfo['sha256'])
             ->first();
 
-        $fcmService = new FcmService();
-
         // Preparar dados para a notificação
         $notificationData = [
             'name' => "{$webhookInfo['name']}",
@@ -281,18 +322,14 @@ class WebhookController extends Controller
             'content' => is_array($mediaId) ? json_encode($mediaId) : $mediaId,
             'timestamp' => "{$webhookInfo['timestamp']}",
             'type' => $webhookInfo['event_type'],
-            'type_status' => 'load',
+            'type_status' => 'new',
             'sent_by_user' => "1",
             'chat_conversation_id' => "$conversation->id",
             'chat_messege_id' => "$message->id",
         ];
 
-
-        $fcmTokens = FcmToken::all()->pluck('fcm_token')->toArray();
-
         // Enviar a notificação
-        if (count($fcmTokens) > 0)
-            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], 'Novo documento',  $notificationData, true);
+        $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], 'Novo documento');
 
 
         $directoryPath = 'docs-whatsapp';
@@ -310,25 +347,22 @@ class WebhookController extends Controller
                 'file_id' => "{$mediaInfo['id']}",
                 'file_size' => "{$mediaInfo['file_size']}",
                 'file_mime_type' => "{$mediaInfo['mime_type']}",
-                'file_mime_type' => "{$mediaInfo['mime_type']}",
                 'file_src' => "{$src}",
             ]);
         }
 
-        $notificationData['type_status'] = 'download';
+        $notificationData['type_status'] = 'src';
         $file = [
             'file_sha256' => "{$mediaInfo['sha256']}",
-            'file_url' => "{$mediaInfo['url']}",
             'file_id' => "{$mediaInfo['id']}",
             'file_size' => "{$mediaInfo['file_size']}",
-            'file_mime_type' => "{$mediaInfo['mime_type']}",
             'file_mime_type' => "{$mediaInfo['mime_type']}",
             'file_src' => "{$src}",
         ];
         $notificationData = array_merge($notificationData, $file);
 
-        if (count($fcmTokens) > 0)
-            $fcmService->sendNotification($fcmTokens, $webhookInfo['name'], 'Novo documento',  $notificationData, true);
+        $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], 'Novo documento');
+
     }
 
 

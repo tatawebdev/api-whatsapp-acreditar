@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\PhoneTokenController;
 use App\Models\FcmToken;
 use App\Services\FcmService;
@@ -28,11 +29,8 @@ Route::get('/teste', [ChatController::class, 'teste']);
 
 Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
 
-Route::get('/teste', function () {
 
-    dd(config("filesystems.disks.public"));
-
-});
+Route::post('/chat/send/image', [ChatController::class, 'sendImage'])->name('chat.sendImage');
 
 
 
@@ -53,12 +51,14 @@ Route::get('/chat/send', function () {
 
 // 5511951936777 Jerê ola
 
+Route::get('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
 Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
 Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
 
 Route::post('/phone/token', [PhoneTokenController::class, 'store']);
 
- 
+
+
 
 // Route::get('/', function () {
 //     return view('welcome');
