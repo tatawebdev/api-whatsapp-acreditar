@@ -24,6 +24,12 @@ Route::get('/teste', [WhatsAppController::class, 'teste']);
 
 
 
+Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
+Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
+
+
+
+
 // Route::get('/user', function (Request $request) {
 //     var_dump($request->user());
 //     return $request->user();
