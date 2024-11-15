@@ -25,7 +25,7 @@ Route::get('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])-
 Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
 Route::post('/chat/send/image', [ChatController::class, 'sendImage'])->name('chat.sendImage');
 
-Route::get('/chat/download/image/{$id_file}', [ChatController::class, 'downloadImageServidor'])->name('chat.downloadImageServidor');
+Route::get('/chat/download/image/{id_file?}', [ChatController::class, 'downloadImageServidor'])->name('chat.downloadImageServidor');
 
 Route::post('/phone/token', [PhoneTokenController::class, 'store']);
 
