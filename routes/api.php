@@ -20,9 +20,12 @@ Route::get('/teste', [WhatsAppController::class, 'teste']);
 
 Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
 Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
+Route::get('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
 
 Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
 Route::post('/chat/send/image', [ChatController::class, 'sendImage'])->name('chat.sendImage');
+
+Route::post('/chat/image', [ChatController::class, 'getImage'])->name('chat.getImage');
 
 Route::post('/phone/token', [PhoneTokenController::class, 'store']);
 

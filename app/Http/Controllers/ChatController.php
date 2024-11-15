@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\ConversationSession;
+use App\Models\FileModel;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use WhatsApp\Media;
 
 class ChatController extends Controller
 {
@@ -52,7 +54,9 @@ class ChatController extends Controller
         if (!$id)
             return response()->json(['error' => 'ID da conversa é necessário.'], 400);
 
-        $messages = Message::where('conversation_id', $id)->paginate(20000);
+        $messages = Message::with('fileby_content')
+            ->where('conversation_id', $id)
+            ->paginate(20000);
 
         return response()->json($messages);
     }
@@ -81,6 +85,44 @@ class ChatController extends Controller
     }
 
 
+    public function getImage(Request $request)
+    {
+        $validated = $request->validate([
+            'file_id' => 'required',
+        ]);
+
+        $media = new Media();
+        $mediaInfo = $media->getMediaInfo($validated['file_id']);
+
+        $file = FileModel::where('file_url', $mediaInfo['url'])
+            ->orWhere('file_sha256', $mediaInfo['sha256'])
+            ->first();
+
+        $directoryPath = 'docs-whatsapp';
+
+        // Verifica se a pasta existe, caso contrário, cria
+        if (!Storage::disk('public')->exists($directoryPath)) {
+            Storage::disk('public')->makeDirectory($directoryPath);
+        }
+
+        $src = $media->downloadMedia($mediaInfo, "$directoryPath/{$mediaInfo['id']}");
+
+        if (!$file) {
+            // Se não existir o arquivo no banco de dados, cria um novo registro
+            $file = FileModel::create([
+                'file_sha256' => $mediaInfo['sha256'],
+                'file_url' => $mediaInfo['url'],
+                'file_id' => $mediaInfo['id'],
+                'file_size' => $mediaInfo['file_size'],
+                'file_mime_type' => $mediaInfo['mime_type'],
+                'file_src' => $src,
+            ]);
+        }
+
+        return response()->json([
+            'file_url' => $src,
+        ]);
+    }
     public function sendImage(Request $request)
     {
         // Validação do arquivo

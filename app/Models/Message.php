@@ -20,7 +20,7 @@ class Message extends Model
     }
     public function fileby_content()
     {
-        return $this->hasOne(FileModel::class, 'id', 'context');
+        return $this->hasOne(FileModel::class, 'file_id', 'content');
     }
     public function conversation_section()
     {
