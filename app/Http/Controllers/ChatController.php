@@ -132,6 +132,7 @@ class ChatController extends Controller
             'contact_name' => 'required',
             'content' => 'required',
             'sent_by_user' => 'nullable|boolean',
+            'unique_identifier' => 'nullable|string',
         ]);
 
         $session = ConversationSession::activeSession($validated['from']);
@@ -142,7 +143,7 @@ class ChatController extends Controller
             ], 403);
         }
 
-        $returnMeta = $this->sendImageWhatsApp($validated['from'], $validated['content']);
+        $returnMeta = $this->sendMessageWhatsApp($validated['from'], $validated['content']);
         // Verifica se o envio pelo WhatsApp foi bem-sucedido
         if (empty($returnMeta['messages'][0]['id'])) {
             return response()->json([
@@ -170,6 +171,7 @@ class ChatController extends Controller
             'timestamp' => strtotime(now()), // Preenchido com a data e hora atual
             'type' => "",
             'sent_by_user' => (int) ($validated['sent_by_user'] ?? false),
+            'unique_identifier' => ($validated['unique_identifier'] ?? null),
         ]);
 
         return response()->json($message, 201);

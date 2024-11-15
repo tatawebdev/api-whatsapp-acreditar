@@ -268,7 +268,7 @@ const enviarMensagemWhatsApp = () => {
 
     // Chama a função ajaxSimpleRequest para enviar os dados
     ajaxSimpleRequest('/chat/send', { from, contact_name, content }, function (response) {
-
+console.log(response)
         messageData = response
 
         Chat.addMessage({

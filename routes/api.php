@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\PhoneTokenController;
 use App\Http\Controllers\WhatsAppController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -17,16 +18,19 @@ Route::get('/send-message', [WhatsAppController::class, 'sendMessage']);
 Route::get('/teste', [WhatsAppController::class, 'teste']);
 
 
+Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
+Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
+
+Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
+Route::post('/chat/send/image', [ChatController::class, 'sendImage'])->name('chat.sendImage');
+
+Route::post('/phone/token', [PhoneTokenController::class, 'store']);
+
+
 
 // Route::get('conversations', [ChatController::class, 'getConversations']);
 // Route::post('send-message', [ChatController::class, 'sendMessage']);
 // Route::post('receive-message', [ChatController::class, 'receiveMessage']);
-
-
-
-Route::post('/chat/conversations', [ChatController::class, 'getConversations'])->name('chat.getConversations');
-Route::post('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])->name('chat.getMessages');
-
 
 
 

@@ -213,10 +213,11 @@ class WebhookController extends Controller
                     'message_id' => "{$webhookInfo['message_id']}",
                     'type' => $webhookInfo['event_type'],
                     'status' => $webhookInfo['status'],
-                    'sent_by_user' => "1",
+                    'sent_by_user' => "0",
                     'chat_conversation_id' => "$conversation->id",
                     'chat_messege_id' => "$message->id",
                     'session_end' => "{$message->conversation_section->session_end}",
+                    'unique_identifier' => "$message->unique_identifier" ?? '',
                 ];
 
                 // Enviar a notificação
