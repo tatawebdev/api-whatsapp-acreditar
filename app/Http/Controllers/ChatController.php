@@ -85,14 +85,18 @@ class ChatController extends Controller
     }
 
 
-    public function getImage(Request $request)
+    public function DownloadImageServidor(Request $request, $id_file = null)
     {
-        $validated = $request->validate([
-            'file_id' => 'required',
-        ]);
+        if (!$id_file) {
+            return response()->json(['erro' => 'file_id é obrigatório'], 400);
+        }
 
         $media = new Media();
-        $mediaInfo = $media->getMediaInfo($validated['file_id']);
+        $mediaInfo = $media->getMediaInfo($id_file);
+
+        if (!$mediaInfo) {
+            return response()->json(['erro' => 'Mídia não encontrada'], 404);
+        }
 
         $file = FileModel::where('file_url', $mediaInfo['url'])
             ->orWhere('file_sha256', $mediaInfo['sha256'])
@@ -100,7 +104,6 @@ class ChatController extends Controller
 
         $directoryPath = 'docs-whatsapp';
 
-        // Verifica se a pasta existe, caso contrário, cria
         if (!Storage::disk('public')->exists($directoryPath)) {
             Storage::disk('public')->makeDirectory($directoryPath);
         }
@@ -108,7 +111,6 @@ class ChatController extends Controller
         $src = $media->downloadMedia($mediaInfo, "$directoryPath/{$mediaInfo['id']}");
 
         if (!$file) {
-            // Se não existir o arquivo no banco de dados, cria um novo registro
             $file = FileModel::create([
                 'file_sha256' => $mediaInfo['sha256'],
                 'file_url' => $mediaInfo['url'],
