@@ -18,6 +18,10 @@ class Message extends Model
     {
         return $this->hasOne(FileModel::class);
     }
+    public function fileby_content()
+    {
+        return $this->hasOne(FileModel::class, 'id', 'context');
+    }
     public function conversation_section()
     {
         return $this->hasOne(ConversationSession::class, 'id', 'conversation_session_id');
