@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+namespace App\Http\Middleware;
+
 use Closure;
 use Illuminate\Http\Request;
 use ReflectionMethod;
@@ -23,12 +25,7 @@ class LogJsonResponse
         // Processa a resposta da requisição
         $response = $next($request);
 
-
-        // if ($response->status() == 200)
-        //     return $response;
-
         // Verifica se o ambiente é 'local' usando a configuração e se a resposta é do tipo JSON
-        // if (config('app.env') === 'local' && $response->headers->get('Content-Type') === 'application/json') {
         if (config('app.env') === 'local') {
 
             $route = $request->route();
@@ -51,7 +48,6 @@ class LogJsonResponse
 
                     // Formata o link para abrir no VS Code
                     $vscodeLink = "file:///$controllerPath:$startLine";
-
                     $vscodeLink = str_replace("\\", "/", $vscodeLink);
                 } catch (\ReflectionException $e) {
                     // Se ocorrer um erro na reflexão, mantemos 'N/A' como linha
@@ -64,16 +60,14 @@ class LogJsonResponse
             $requestData .= "Method: " . $controllerMethod . " (Lines: $startLine - $endLine)\n";
             $requestData .= "VS Code Link: " . $vscodeLink . "\n";
             $requestData .= "HTTP Method: " . $request->method() . "\n";
-
             $requestData .= "Headers:\n";
-
             $requestData .= "Body:\n";
             foreach ($request->all() as $key => $value) {
                 $requestData .= "  - " . $key . ": " . (is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value) . "\n";
             }
 
             // Construindo a string do log da Response
-            $responseData = "Status: " . $response->status() . "\n";
+            $responseData = "Status: " . $response->getStatusCode() . "\n"; // Alterado para getStatusCode()
             $responseContent = json_decode($response->getContent(), true);
             if (is_array($responseContent)) {
                 $responseData .= "Content:\n";

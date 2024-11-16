@@ -119,9 +119,8 @@ class WebhookController extends Controller
             'session_end' => "$session->session_end",
         ];
 
-
-
         $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], $content);
+
     }
     private function process_unsupported($webhookInfo) {}
     private function process_status($webhookInfo)
@@ -283,9 +282,9 @@ class WebhookController extends Controller
 
     private function document($webhookInfo, $mediaId)
     {
-        $media = new Media();
+        // $media = new Media();
 
-        $mediaInfo = $media->getMediaInfo($mediaId);
+        // $mediaInfo = $media->getMediaInfo($mediaId);
         // if (!$mediaInfo || empty($mediaInfo['url'])) return $this->logError("URL da mídia não encontrada.");
 
 
@@ -298,8 +297,6 @@ class WebhookController extends Controller
         $conversation->updated_at = now();
         $conversation->save();
 
-
-
         // Criar a mensagem
         $message = $conversation->messages()->create([
             'from' => $webhookInfo['celular'],
@@ -311,9 +308,9 @@ class WebhookController extends Controller
         ]);
 
         // Verificando se o arquivo já existe com o sha256 ou file_url
-        $file = FileModel::where('file_url', $mediaInfo['url'])
-            ->orWhere('file_sha256', $mediaInfo['sha256'])
-            ->first();
+        // $file = FileModel::where('file_url', $mediaInfo['url'])
+        //     ->orWhere('file_sha256', $mediaInfo['sha256'])
+        //     ->first();
 
         // Preparar dados para a notificação
         $notificationData = [
@@ -333,36 +330,37 @@ class WebhookController extends Controller
         $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], 'Novo documento');
 
 
-        $directoryPath = 'docs-whatsapp';
+        // $directoryPath = 'docs-whatsapp';
 
-        // Verifica se a pasta existe, caso contrário, cria
-        if (!Storage::disk('public')->exists($directoryPath)) {
-            Storage::disk('public')->makeDirectory($directoryPath);
-        }
+        // // Verifica se a pasta existe, caso contrário, cria
+        // if (!Storage::disk('public')->exists($directoryPath)) {
+        //     Storage::disk('public')->makeDirectory($directoryPath);
+        // }
+        // return;
 
-        $src =   $media->downloadMedia($mediaInfo, "$directoryPath/{$mediaInfo['id']}");
-        if (!$file) {
-            $file = FileModel::create([
-                'file_sha256' => "{$mediaInfo['sha256']}",
-                'file_url' => "{$mediaInfo['url']}",
-                'file_id' => "{$mediaInfo['id']}",
-                'file_size' => "{$mediaInfo['file_size']}",
-                'file_mime_type' => "{$mediaInfo['mime_type']}",
-                'file_src' => "{$src}",
-            ]);
-        }
+        // $src =   $media->downloadMedia($mediaInfo, "$directoryPath/{$mediaInfo['id']}");
+        // if (!$file) {
+        //     $file = FileModel::create([
+        //         'file_sha256' => "{$mediaInfo['sha256']}",
+        //         'file_url' => "{$mediaInfo['url']}",
+        //         'file_id' => "{$mediaInfo['id']}",
+        //         'file_size' => "{$mediaInfo['file_size']}",
+        //         'file_mime_type' => "{$mediaInfo['mime_type']}",
+        //         'file_src' => "{$src}",
+        //     ]);
+        // }
 
-        $notificationData['type_status'] = 'src';
-        $file = [
-            'file_sha256' => "{$mediaInfo['sha256']}",
-            'file_id' => "{$mediaInfo['id']}",
-            'file_size' => "{$mediaInfo['file_size']}",
-            'file_mime_type' => "{$mediaInfo['mime_type']}",
-            'file_src' => "{$src}",
-        ];
-        $notificationData = array_merge($notificationData, $file);
+        // $notificationData['type_status'] = 'src';
+        // $file = [
+        //     'file_sha256' => "{$mediaInfo['sha256']}",
+        //     'file_id' => "{$mediaInfo['id']}",
+        //     'file_size' => "{$mediaInfo['file_size']}",
+        //     'file_mime_type' => "{$mediaInfo['mime_type']}",
+        //     'file_src' => "{$src}",
+        // ];
+        // $notificationData = array_merge($notificationData, $file);
 
-        $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], 'Novo documento');
+        // $this->sendNotificationToAllUsers($notificationData, $webhookInfo['name'], 'Novo documento');
 
     }
 

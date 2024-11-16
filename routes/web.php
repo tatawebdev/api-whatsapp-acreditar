@@ -19,6 +19,20 @@ use Illuminate\Support\Facades\Route;
 |
 */
 // https://mdbootstrap.com/docs/standard/extended/chat/
+
+
+
+Route::get('/resources/{id_file?}', [ChatController::class, 'downloadResourcesMedia'])->name('chat.downloadResourcesMedia');
+
+
+
+
+
+
+
+
+
+
 Route::get('/', function () {
     return view('chat');
 });

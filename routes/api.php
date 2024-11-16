@@ -24,8 +24,11 @@ Route::get('/chat/conversations/{id?}', [ChatController::class, 'getMessages'])-
 
 Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.sendMessage');
 Route::post('/chat/send/image', [ChatController::class, 'sendImage'])->name('chat.sendImage');
+Route::post('/chat/send/audio', [ChatController::class, 'sendAudio'])->name('chat.sendAudio');
 
-Route::get('/chat/download/image/{id_file?}', [ChatController::class, 'downloadImageServidor'])->name('chat.downloadImageServidor');
+Route::get('/resources/{id_file?}', [ChatController::class, 'downloadResourcesMedia'])->name('chat.downloadResourcesMedia');
+
+
 
 Route::post('/phone/token', [PhoneTokenController::class, 'store']);
 

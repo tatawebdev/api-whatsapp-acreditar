@@ -105,6 +105,19 @@ class Message extends CurlHttpClient
         ];
         return $this->sendMessage();
     }
+    public function sendLinkAudioMessage($url)
+    {
+        $this->array = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => self::$number,
+            'type' => 'audio',
+            'audio' => [
+                'link' => $url
+            ]
+        ];
+        return $this->sendMessage();
+    }
     public function sendDocumentMessage($mediaObjectId, $document = "document")
     {
         $this->array = [

@@ -1,38 +1,4 @@
-<?php
-
-namespace WhatsApp;
-
-use Illuminate\Support\Facades\Storage;
-
-class Media extends CurlHttpClient
-{
-    public function uploadMedia($mediaFilePath, $mediaType = 'image/jpeg')
-    {
-        $url = 'https://graph.facebook.com/v18.0/<MEDIA_ID>/media';
-        $headers = ["Authorization: Bearer " . config('whatsapp.token')];
-
-        $postData = [
-            'file' => new \CURLFile($mediaFilePath, $mediaType),
-            'type' => $mediaType,
-            'messaging_product' => 'whatsapp'
-        ];
-
-        $result = $this->sendRequest($url, 'POST', $headers, $postData);
-        $decodedResult = json_decode($result, true);
-
-        return $decodedResult['id'] ?? $this->logError("Erro ao enviar mídia: $result");
-    }
-
-    public function downloadMedia($mediaInfo, $savePath)
-    {
-        // $mediaInfo = $this->getMediaInfo($mediaId);
-        // if (!$mediaInfo || empty($mediaInfo['url'])) return $this->logError("URL da mídia não encontrada.");
-
-        if (empty($mediaInfo['url'])) {
-            return $this->logError("URL da mídia não encontrada.");
-        }
-
-        $ch = curl_init($mediaInfo['url']);
+;5];  \Z
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Authorization: Bearer " . config('whatsapp.token'),
             "User-Agent: Laravel"
@@ -55,8 +21,8 @@ class Media extends CurlHttpClient
             // Salva o arquivo no diretório público
             Storage::disk('public')->put($filePath, $data);
 
-            // Retorna a URL pública do arquivo
-            return Storage::url($filePath);  // Retorna a URL completa acessível via web
+            // return Storage::url($filePath);  
+            return $filePath;
         }
 
         // Retorna um erro se o download falhar
