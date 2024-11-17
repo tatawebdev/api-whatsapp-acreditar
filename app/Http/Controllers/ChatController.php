@@ -186,85 +186,97 @@ class ChatController extends Controller
         $validated = $request->validate([
             'from' => 'required',
             'contact_name' => 'required',
-            'audio' => 'required|file', // Garante que o campo é um arquivo de áudio válido
+            'audio' => 'required|file', // Adicionando validação de tipo de arquivo de áudio
         ]);
-
+    
         // Verifica se há uma sessão ativa
         $session = ConversationSession::activeSession($validated['from']);
         if (!$session) {
             return response()->json(['error' => 'Sessão expirada.'], 403);
         }
-
+    
         if ($request->hasFile('audio') && $request->file('audio')->isValid()) {
             $file = $request->file('audio');
             $fileMimeType = $file->getMimeType();
-
+    
             // Gera nome para o arquivo mp3
             $mp3FileName = 'audio_' . time() . '.mp3';
-
+    
             // Armazenar o arquivo de áudio original
             $audioPath = $file->storeAs('audios', 'original_' . $file->getClientOriginalName(), 'public');
             $audioUrl = Storage::url($audioPath);
-
-            // Convertendo o arquivo para MP3 usando FFMpeg
-            $ffmpeg = FFMpeg::create();
-            $audio = $ffmpeg->open($file->getRealPath());
-            $convertedPath = storage_path('app/public/audios/' . $mp3FileName);
-
-            // Salva o arquivo convertido para MP3
-            $audio->save(new Mp3(), $convertedPath);
-
-            // Gera a URL do arquivo convertido
-            $convertedUrl = Storage::url('audios/' . $mp3FileName);
-
+    
+            // Configura o caminho para os binários do FFMpeg (caso necessário)
+            $ffmpeg = FFMpeg::create([
+                'ffmpeg.binaries'  => base_path('ffmpeg/ffmpeg'),   // Caminho para o ffmpeg
+                'ffprobe.binaries' =>  base_path('ffmpeg/ffprobe'),  // Caminho para o ffprobe
+                'timeout'          => 3600,  // Timeout para os processos
+                'ffmpeg.threads'   => 12,    // Número de threads para o processo ffmpeg
+            ]);
+    
+            try {
+                // Abrir o arquivo de áudio para conversão
+                $audio = $ffmpeg->open($file->getRealPath());
+                $convertedPath = storage_path('app/public/audios/' . $mp3FileName);
+    
+                // Salvar o arquivo convertido para MP3
+                $audio->save(new Mp3(), $convertedPath);
+    
+                // Gerar a URL do arquivo convertido
+                $convertedUrl = Storage::url('audios/' . $mp3FileName);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Erro ao converter o áudio: ' . $e->getMessage()], 500);
+            }
+    
             // Gerar o hash SHA-256 do arquivo original
             $fileSha256 = hash_file('sha256', $file->getRealPath());
-
-            // Gera meta para envio de áudio (considerando a função sendAudioWhatsApp como exemplo)
+    
+            // Gera meta para envio de áudio (exemplo de função sendAudioWhatsApp)
             $returnMeta = $this->sendAudioWhatsApp($validated['from'], $convertedUrl);
-
+    
             // Gerar um novo ID para o arquivo
             $fileId = 'send_' . uniqid();
-
+    
             // Criação ou atualização da conversa
             $conversation = Conversation::firstOrCreate(
                 ['from' => $validated['from']],
                 ['contact_name' => $validated['contact_name']]
             );
-
+    
             $conversation->updated_at = now();
             $conversation->save();
-
+    
             // Criação da mensagem
             $message = $conversation->messages()->create([
                 'content' => $fileId,
                 'from' => $validated['from'],
                 'message_id' => $returnMeta['messages'][0]['id'],
                 'timestamp' => strtotime(now()),
-                'type' => "audio", // Alterado de "image" para "audio"
+                'type' => "audio", // Tipo alterado para "audio"
                 'sent_by_user' => (int) ($validated['sent_by_user'] ?? false),
                 'unique_identifier' => ($validated['unique_identifier'] ?? null),
             ]);
-
+    
             // Armazenando os dados do arquivo
             $message->fileby_content = FileModel::create([
                 'file_sha256' => $fileSha256, // Armazenar o hash SHA-256
                 'file_url' => $convertedUrl,
                 'file_id' => $fileId,
                 'file_size' => $file->getSize(),
-                'file_mime_type' => 'audio/mp3', // Garantir o tipo MIME como audio/mp3 após conversão
+                'file_mime_type' => 'audio/mp3', // Tipo MIME após conversão
                 'file_src' => $file->getClientOriginalName(),
             ]);
-
+    
             return response()->json([
                 'audioUrl' => $convertedUrl,
                 'message' => $message,
                 'fileMimeType' => 'audio/mp3', // Tipo MIME do arquivo convertido
             ]);
         }
-
+    
         return response()->json(['error' => 'Arquivo inválido ou ausente.'], 400);
     }
+    
 
 
 

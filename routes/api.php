@@ -30,6 +30,19 @@ Route::get('/resources/{id_file?}', [ChatController::class, 'downloadResourcesMe
 
 
 
+Route::get('/audio', function (){
+
+
+    
+$url =    'https://api-whatsapp-acreditar.tataweb.com.br/audio.mp3';
+
+
+    $objMensagem = \WhatsApp\Message::getInstance();
+    $objMensagem->setRecipientNumber('5511951936777');
+    $returnMeta = $objMensagem->sendLinkAudioMessage($url);
+dd($returnMeta);
+
+});
 Route::post('/phone/token', [PhoneTokenController::class, 'store']);
 
 
