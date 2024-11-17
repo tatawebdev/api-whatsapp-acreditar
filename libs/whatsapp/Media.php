@@ -56,7 +56,7 @@ class Media extends CurlHttpClient
             Storage::disk('public')->put($filePath, $data);
 
             // Retorna a URL pública do arquivo
-            return Storage::url($filePath);  // Retorna a URL completa acessível via web
+            return $filePath;  // Retorna a URL completa acessível via web
         }
 
         // Retorna um erro se o download falhar
