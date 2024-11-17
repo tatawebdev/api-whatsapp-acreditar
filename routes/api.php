@@ -34,8 +34,8 @@ Route::get('/audio', function (){
 
 
     
-$url =    'https://api-whatsapp-acreditar.tataweb.com.br/audio.mp3';
-
+$url =    'https://api-whatsapp-acreditar.tataweb.com.br/output.mp3';
+dd($url);
 
     $objMensagem = \WhatsApp\Message::getInstance();
     $objMensagem->setRecipientNumber('5511951936777');
